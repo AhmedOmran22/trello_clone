@@ -57,7 +57,7 @@ class AuthSupabaseDatasource implements AuthRemoteDatasource {
     try {
       final response = await services.client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: 'io.supabase.trelloclone://login-callback/',
+        redirectTo: 'com.omran.trello.clone://login-callback/',
       );
 
       if (!response) {
