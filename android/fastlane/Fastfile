@@ -9,7 +9,7 @@ platform :android do
     app: "1:817879246720:android:6ae66bd63fc18ec9824365",
     apk_path: "../build/app/outputs/apk/release/app-release.apk",
     testers: "mamdouhanahamada@gmail.com ",
-    release_notes: "first release of the Trello Clone application",
+    release_notes: "Finish Authentication feature",
     firebase_cli_token: ENV["FIREBASE_TOKEN"]
   )
   end
