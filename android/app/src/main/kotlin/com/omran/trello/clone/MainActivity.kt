@@ -1,4 +1,4 @@
-package com.example.trello_clone
+package com.omran.trello.clone
 
 import io.flutter.embedding.android.FlutterActivity
 

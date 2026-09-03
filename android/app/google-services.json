@@ -7,12 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:817879246720:android:333758461f719465824365",
+        "mobilesdk_app_id": "1:817879246720:android:6ae66bd63fc18ec9824365",
         "android_client_info": {
-          "package_name": "com.example.trello_clone"
+          "package_name": "com.omran.trello.clone"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "817879246720-73m237obpcm5292l3jvl4l7lepo9tu76.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAjIv2M25VZlkgKhaTfPBE5PAy1mb6-7G0"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "817879246720-73m237obpcm5292l3jvl4l7lepo9tu76.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
