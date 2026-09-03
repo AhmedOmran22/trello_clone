@@ -12,9 +12,6 @@ extension BuildContextExtensions on BuildContext {
   double get screenHeight => screenSize.height;
   EdgeInsets get padding => MediaQuery.paddingOf(this);
 
-  // ── Navigation ──
-  void pop<T>([T? result]) => Navigator.of(this).pop(result);
-
   // ── Snackbar ──
   void showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(this)
@@ -27,4 +24,6 @@ extension BuildContextExtensions on BuildContext {
         ),
       );
   }
+
+  void showErrorSnackBar(String message) => showSnackBar(message, isError: true);
 }
