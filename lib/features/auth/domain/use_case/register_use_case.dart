@@ -12,10 +12,6 @@ class RegisterUseCase {
     required String password,
     required String fullName,
   }) {
-    return repository.register(
-      email: email,
-      password: password,
-      fullName: fullName,
-    );
+    return repository.register(email: email, password: password, fullName: fullName);
   }
 }

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/context_extensions.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/validators.dart';
+import '../cubits/auth_cubit.dart';
+import '../cubits/auth_state.dart';
 import 'auth_or_divider.dart';
 import 'auth_text_field_widget.dart';
 import 'google_sign_in_button.dart';
@@ -27,7 +30,12 @@ class _LoginFormState extends State<LoginForm> {
   }
 
   void _submit() {
-    if (_formKey.currentState?.validate() ?? false) {}
+    if (_formKey.currentState?.validate() ?? false) {
+      context.read<AuthCubit>().login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+    }
   }
 
   @override
@@ -72,11 +80,22 @@ class _LoginFormState extends State<LoginForm> {
             ),
           ),
           const SizedBox(height: AppTheme.spacingSm),
-          ElevatedButton(onPressed: () => _submit(), child: const Text('Sign In')),
+          BlocBuilder<AuthCubit, AuthState>(
+            builder: (BuildContext context, state) {
+              return ElevatedButton(
+                onPressed: state.status != AuthStatus.loading ? _submit : null,
+                child: state.status == AuthStatus.loading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Sign In'),
+              );
+            },
+          ),
           const SizedBox(height: AppTheme.spacingLg),
           const AuthOrDivider(),
           const SizedBox(height: AppTheme.spacingLg),
-          GoogleSignInButton(onPressed: () {}),
+          GoogleSignInButton(
+            onPressed: () => context.read<AuthCubit>().loginWithGoogle(),
+          ),
         ],
       ),
     );

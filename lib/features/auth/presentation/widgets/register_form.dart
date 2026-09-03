@@ -109,7 +109,9 @@ class _RegisterFormState extends State<RegisterForm> {
           const SizedBox(height: AppTheme.spacingLg),
           const AuthOrDivider(),
           const SizedBox(height: AppTheme.spacingLg),
-          GoogleSignInButton(onPressed: () {}),
+          GoogleSignInButton(
+            onPressed: () => context.read<AuthCubit>().loginWithGoogle(),
+          ),
         ],
       ),
     );

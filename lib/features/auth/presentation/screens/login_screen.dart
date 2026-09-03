@@ -53,7 +53,9 @@ class _LoginScreenState extends State<LoginScreen>
     return BlocListener<AuthCubit, AuthState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
-        if (state.status == AuthStatus.success) {}
+        if (state.status == AuthStatus.success) {
+          context.goNamed(RouteNames.workspaces);
+        }
         if (state.status == AuthStatus.error) {
           context.showErrorSnackBar(state.error!);
         }

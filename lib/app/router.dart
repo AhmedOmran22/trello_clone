@@ -8,6 +8,7 @@ import '../core/di/di_container.dart';
 import '../features/auth/presentation/cubits/auth_cubit.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
+import '../features/workspaces/presentation/screens/workspaces_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -31,6 +32,14 @@ class AppRouter {
         builder: (context, state) => BlocProvider(
           create: (_) => sl<AuthCubit>(),
           child: const RegisterScreen(),
+        ),
+      ),
+      GoRoute(
+        path: RouteNames.workspaces,
+        name: RouteNames.workspaces,
+        builder: (context, state) => BlocProvider(
+          create: (_) => sl<AuthCubit>(),
+          child: const WorkspacesScreen(),
         ),
       ),
     ],

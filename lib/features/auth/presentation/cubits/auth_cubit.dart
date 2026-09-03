@@ -21,6 +21,8 @@ class AuthCubit extends Cubit<AuthState> {
 
     final result = await loginUseCase(email: email, password: password);
 
+    if (isClosed) return;
+
     result.when(
       success: (user) =>
           emit(state.copyWith(status: AuthStatus.success, user: user)),
@@ -42,6 +44,8 @@ class AuthCubit extends Cubit<AuthState> {
       fullName: fullName,
     );
 
+    if (isClosed) return;
+
     result.when(
       success: (user) =>
           emit(state.copyWith(status: AuthStatus.success, user: user)),
@@ -54,6 +58,8 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(status: AuthStatus.loading));
 
     final result = await loginWithGoogleUseCase();
+
+    if (isClosed) return;
 
     result.when(
       success: (user) =>

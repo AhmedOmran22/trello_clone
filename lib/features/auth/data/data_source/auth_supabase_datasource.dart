@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 
 import '../../../../core/constants/supabase_tables.dart';
@@ -48,6 +50,7 @@ class AuthSupabaseDatasource implements AuthRemoteDatasource {
 
       return await _fetchProfile(response.user!.id);
     } on AuthApiException catch (e) {
+      log(e.toString());
       throw AuthException(e.message);
     }
   }

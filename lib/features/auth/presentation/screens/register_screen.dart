@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/context_extensions.dart';
+import '../../../../core/constants/route_names.dart';
 import '../cubits/auth_cubit.dart';
 import '../cubits/auth_state.dart';
 import '../widgets/auth_card.dart';
@@ -52,7 +53,9 @@ class _RegisterScreenState extends State<RegisterScreen>
     return BlocListener<AuthCubit, AuthState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
-        if (state.status == AuthStatus.success) {}
+        if (state.status == AuthStatus.success) {
+          context.goNamed(RouteNames.workspaces);
+        }
         if (state.status == AuthStatus.error) {
           context.showErrorSnackBar(state.error!);
         }
