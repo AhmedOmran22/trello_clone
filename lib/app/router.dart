@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/constants/route_names.dart';
+import '../core/di/di_container.dart';
+import '../features/auth/presentation/cubits/auth_cubit.dart';
+import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/auth/presentation/screens/register_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -16,8 +21,17 @@ class AppRouter {
     routes: [
       GoRoute(
         path: RouteNames.login,
-        name: 'login',
-        builder: (context, state) => const Scaffold(),
+        name: RouteNames.login,
+        builder: (context, state) =>
+            BlocProvider(create: (_) => sl<AuthCubit>(), child: const LoginScreen()),
+      ),
+      GoRoute(
+        path: RouteNames.register,
+        name: RouteNames.register,
+        builder: (context, state) => BlocProvider(
+          create: (_) => sl<AuthCubit>(),
+          child: const RegisterScreen(),
+        ),
       ),
     ],
   );
