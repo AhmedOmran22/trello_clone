@@ -25,20 +25,26 @@ class _NavbarScreenState extends State<NavbarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(centerTitle: true, title: Text(_appBarTitles[_currentIndex])),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: const [
-          WorkspaceScreen(),
-          SearchScreen(),
-          NotificationsScreen(),
-          ProfileScreen(),
-        ],
-      ),
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+    return PopScope(
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) setState(() => _currentIndex = 0);
+      },
+      child: Scaffold(
+        appBar: AppBar(centerTitle: true, title: Text(_appBarTitles[_currentIndex])),
+        body: IndexedStack(
+          index: _currentIndex,
+          children: const [
+            WorkspaceScreen(),
+            SearchScreen(),
+            NotificationsScreen(),
+            ProfileScreen(),
+          ],
+        ),
+        bottomNavigationBar: CustomBottomNavBar(
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+        ),
       ),
     );
   }

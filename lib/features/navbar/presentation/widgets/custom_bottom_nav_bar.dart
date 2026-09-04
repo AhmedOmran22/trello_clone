@@ -20,7 +20,7 @@ const List<NavBarItemData> navBarItems = [
   NavBarItemData(
     icon: Icons.dashboard_outlined,
     activeIcon: Icons.dashboard,
-    label: 'Boards',
+    label: 'workSpaces',
   ),
   NavBarItemData(
     icon: Icons.search_outlined,
@@ -53,9 +53,7 @@ class CustomBottomNavBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
-          top: BorderSide(
-            color: colorScheme.onSurface.withValues(alpha: 0.08),
-          ),
+          top: BorderSide(color: colorScheme.onSurface.withValues(alpha: 0.08)),
         ),
       ),
       child: SafeArea(
@@ -190,9 +188,7 @@ class _ProfileNavIcon extends StatelessWidget {
       height: 28,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: isActive
-            ? Border.all(color: colorScheme.primary, width: 2)
-            : null,
+        border: isActive ? Border.all(color: colorScheme.primary, width: 2) : null,
       ),
       padding: const EdgeInsets.all(1),
       child: avatar,
