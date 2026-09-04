@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/context_extensions.dart';
+import '../../../../core/session/session_cubit.dart';
 import '../../../auth/presentation/cubits/auth_cubit.dart';
 import '../../../auth/presentation/cubits/auth_state.dart';
 
@@ -15,9 +16,14 @@ class WorkspacesScreen extends StatelessWidget {
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           return Center(
-            child: Text(
-              'Welcome, ${state.user?.fullName ?? 'there'}!',
-              style: context.textTheme.headlineSmall,
+            child: InkWell(
+              onTap: () {
+                context.read<SessionCubit>().logout();
+              },
+              child: Text(
+                'Welcome, ${state.user?.fullName ?? 'there'}!',
+                style: context.textTheme.headlineSmall,
+              ),
             ),
           );
         },

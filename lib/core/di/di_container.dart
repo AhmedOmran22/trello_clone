@@ -7,8 +7,11 @@ import '../../features/auth/domain/repo/auth_repo.dart';
 import '../../features/auth/domain/use_case/login_use_case.dart';
 import '../../features/auth/domain/use_case/login_with_google_use_case.dart';
 import '../../features/auth/domain/use_case/register_use_case.dart';
+import '../../features/auth/domain/use_case/get_current_user_use_case.dart';
+import '../../features/auth/domain/use_case/logout_use_case.dart';
 import '../../features/auth/presentation/cubits/auth_cubit.dart';
 import '../services/subabase_services.dart';
+import '../session/session_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -18,19 +21,28 @@ Future<void> initDependencies() async {
 
   // ── Auth ──
   _initAuth();
+
+  // ── Session ──
+  _initSession();
 }
 
 void _initAuth() {
   // Datasource
-  sl.registerLazySingleton<AuthRemoteDatasource>(() => AuthSupabaseDatasource(sl()));
+  sl.registerLazySingleton<AuthRemoteDatasource>(
+    () => AuthSupabaseDatasource(sl()),
+  );
 
   // Repository
-  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(sl()),
+  );
 
   // Use Cases
   sl.registerLazySingleton(() => LoginUseCase(sl()));
   sl.registerLazySingleton(() => RegisterUseCase(sl()));
   sl.registerLazySingleton(() => LoginWithGoogleUseCase(sl()));
+  sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
+  sl.registerLazySingleton(() => LogoutUseCase(sl()));
 
   // Cubit
   sl.registerFactory(
@@ -38,6 +50,16 @@ void _initAuth() {
       loginUseCase: sl(),
       registerUseCase: sl(),
       loginWithGoogleUseCase: sl(),
+      sessionCubit: sl(),
+    ),
+  );
+}
+
+void _initSession() {
+  sl.registerLazySingleton(
+    () => SessionCubit(
+      getCurrentUserUseCase: sl(),
+      logoutUseCase: sl(),
     ),
   );
 }

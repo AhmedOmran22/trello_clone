@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/session/session_cubit.dart';
 import '../../domain/use_case/login_use_case.dart';
 import '../../domain/use_case/login_with_google_use_case.dart';
 import '../../domain/use_case/register_use_case.dart';
@@ -9,11 +10,13 @@ class AuthCubit extends Cubit<AuthState> {
   final LoginUseCase loginUseCase;
   final RegisterUseCase registerUseCase;
   final LoginWithGoogleUseCase loginWithGoogleUseCase;
+  final SessionCubit sessionCubit;
 
   AuthCubit({
     required this.loginUseCase,
     required this.registerUseCase,
     required this.loginWithGoogleUseCase,
+    required this.sessionCubit,
   }) : super(const AuthState());
 
   Future<void> login({required String email, required String password}) async {
@@ -24,8 +27,10 @@ class AuthCubit extends Cubit<AuthState> {
     if (isClosed) return;
 
     result.when(
-      success: (user) =>
-          emit(state.copyWith(status: AuthStatus.success, user: user)),
+      success: (user) {
+        sessionCubit.setUser(user);
+        emit(state.copyWith(status: AuthStatus.success, user: user));
+      },
       error: (failure) =>
           emit(state.copyWith(status: AuthStatus.error, error: failure.message)),
     );
@@ -47,8 +52,10 @@ class AuthCubit extends Cubit<AuthState> {
     if (isClosed) return;
 
     result.when(
-      success: (user) =>
-          emit(state.copyWith(status: AuthStatus.success, user: user)),
+      success: (user) {
+        sessionCubit.setUser(user);
+        emit(state.copyWith(status: AuthStatus.success, user: user));
+      },
       error: (failure) =>
           emit(state.copyWith(status: AuthStatus.error, error: failure.message)),
     );
@@ -62,8 +69,10 @@ class AuthCubit extends Cubit<AuthState> {
     if (isClosed) return;
 
     result.when(
-      success: (user) =>
-          emit(state.copyWith(status: AuthStatus.success, user: user)),
+      success: (user) {
+        sessionCubit.setUser(user);
+        emit(state.copyWith(status: AuthStatus.success, user: user));
+      },
       error: (failure) =>
           emit(state.copyWith(status: AuthStatus.error, error: failure.message)),
     );

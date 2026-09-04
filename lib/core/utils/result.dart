@@ -3,14 +3,15 @@ import '../errors/failures.dart';
 class Result<T> {
   final T? data;
   final Failure? failure;
+  final bool isSuccess;
 
-  const Result._({this.data, this.failure});
+  const Result._({this.data, this.failure, required this.isSuccess});
 
-  factory Result.success(T data) => Result._(data: data);
-  factory Result.error(Failure failure) => Result._(failure: failure);
+  factory Result.success(T data) => Result._(data: data, isSuccess: true);
+  factory Result.error(Failure failure) =>
+      Result._(failure: failure, isSuccess: false);
 
-  bool get isSuccess => data != null;
-  bool get isError => failure != null;
+  bool get isError => !isSuccess;
 
   R when<R>({
     required R Function(T data) success,

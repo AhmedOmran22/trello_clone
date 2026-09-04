@@ -45,75 +45,84 @@ class _RegisterFormState extends State<RegisterForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Create Account', style: context.textTheme.headlineMedium),
-          const SizedBox(height: AppTheme.spacingSm / 2),
-          Text(
-            'Sign up to get started',
-            style: context.textTheme.bodyMedium?.copyWith(
-              color: context.colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(height: AppTheme.spacingLg),
-          AuthTextField(
-            controller: _nameController,
-            hintText: 'Full Name',
-            prefixIcon: Icons.person_outline,
-            textInputAction: TextInputAction.next,
-            validator: Validators.fullName,
-          ),
-          const SizedBox(height: AppTheme.spacingMd),
-          AuthTextField(
-            controller: _emailController,
-            hintText: 'Email',
-            prefixIcon: Icons.email_outlined,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            validator: Validators.email,
-          ),
-          const SizedBox(height: AppTheme.spacingMd),
-          AuthTextField(
-            controller: _passwordController,
-            hintText: 'Password',
-            prefixIcon: Icons.lock_outline,
-            obscureText: true,
-            textInputAction: TextInputAction.next,
-            validator: Validators.password,
-          ),
-          const SizedBox(height: AppTheme.spacingMd),
-          AuthTextField(
-            controller: _confirmPasswordController,
-            hintText: 'Confirm Password',
-            prefixIcon: Icons.lock_outline,
-            obscureText: true,
-            textInputAction: TextInputAction.done,
-            validator: (value) =>
-                Validators.confirmPassword(value, _passwordController.text),
-            onFieldSubmitted: (_) => _submit(),
-          ),
-          const SizedBox(height: AppTheme.spacingLg),
-          BlocBuilder<AuthCubit, AuthState>(
-            builder: (BuildContext context, state) {
-              return ElevatedButton(
-                onPressed: state.status != AuthStatus.loading ? _submit : null,
-                child: state.status == AuthStatus.loading
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (BuildContext context, state) {
+        final isLoading = state.status == AuthStatus.loading;
+        return Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Create Account', style: context.textTheme.headlineMedium),
+              const SizedBox(height: AppTheme.spacingSm / 2),
+              Text(
+                'Sign up to get started',
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacingLg),
+              AuthTextField(
+                controller: _nameController,
+                hintText: 'Full Name',
+                prefixIcon: Icons.person_outline,
+                textInputAction: TextInputAction.next,
+                validator: Validators.fullName,
+                enabled: !isLoading,
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+              AuthTextField(
+                controller: _emailController,
+                hintText: 'Email',
+                prefixIcon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                validator: Validators.email,
+                enabled: !isLoading,
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+              AuthTextField(
+                controller: _passwordController,
+                hintText: 'Password',
+                prefixIcon: Icons.lock_outline,
+                obscureText: true,
+                textInputAction: TextInputAction.next,
+                validator: Validators.password,
+                enabled: !isLoading,
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+              AuthTextField(
+                controller: _confirmPasswordController,
+                hintText: 'Confirm Password',
+                prefixIcon: Icons.lock_outline,
+                obscureText: true,
+                textInputAction: TextInputAction.done,
+                validator: (value) => Validators.confirmPassword(
+                  value,
+                  _passwordController.text,
+                ),
+                onFieldSubmitted: (_) => _submit(),
+                enabled: !isLoading,
+              ),
+              const SizedBox(height: AppTheme.spacingLg),
+              ElevatedButton(
+                onPressed: isLoading ? null : _submit,
+                child: isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('Create Account'),
-              );
-            },
+              ),
+              const SizedBox(height: AppTheme.spacingLg),
+              const AuthOrDivider(),
+              const SizedBox(height: AppTheme.spacingLg),
+              GoogleSignInButton(
+                onPressed: isLoading
+                    ? null
+                    : () => context.read<AuthCubit>().loginWithGoogle(),
+              ),
+            ],
           ),
-          const SizedBox(height: AppTheme.spacingLg),
-          const AuthOrDivider(),
-          const SizedBox(height: AppTheme.spacingLg),
-          GoogleSignInButton(
-            onPressed: () => context.read<AuthCubit>().loginWithGoogle(),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
