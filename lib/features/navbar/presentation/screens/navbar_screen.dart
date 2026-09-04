@@ -17,7 +17,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
   int _currentIndex = 0;
 
   static const List<String> _appBarTitles = [
-    'TaskBoard',
+    'WorkSpaces',
     'Search',
     'Notifications',
     'Profile',
@@ -26,7 +26,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_appBarTitles[_currentIndex])),
+      appBar: AppBar(centerTitle: true, title: Text(_appBarTitles[_currentIndex])),
       body: IndexedStack(
         index: _currentIndex,
         children: const [
