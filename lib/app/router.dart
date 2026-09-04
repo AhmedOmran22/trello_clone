@@ -10,7 +10,7 @@ import '../core/utils/go_router_refresh_stream.dart';
 import '../features/auth/presentation/cubits/auth_cubit.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
-import '../features/workspaces/presentation/screens/workspaces_screen.dart';
+import '../features/navbar/presentation/screens/navbar_screen.dart';
 import 'splash_screen.dart';
 
 class AppRouter {
@@ -44,12 +44,9 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: RouteNames.workspaces,
-        name: RouteNames.workspaces,
-        builder: (context, state) => BlocProvider(
-          create: (_) => sl<AuthCubit>(),
-          child: const WorkspacesScreen(),
-        ),
+        path: RouteNames.home,
+        name: RouteNames.home,
+        builder: (context, state) => const NavbarScreen(),
       ),
     ],
   );
@@ -78,9 +75,9 @@ class AppRouter {
       return RouteNames.login;
     }
 
-    // Logged in but still on auth page or splash → go to workspaces
+    // Logged in but still on auth page or splash → go to home
     if (isAuthenticated && (isOnAuthPage || isOnSplash)) {
-      return RouteNames.workspaces;
+      return RouteNames.home;
     }
 
     // No redirect needed
