@@ -11,6 +11,7 @@ import '../features/auth/presentation/cubits/auth_cubit.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/workspaces/presentation/screens/workspaces_screen.dart';
+import 'splash_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -19,10 +20,15 @@ class AppRouter {
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: RouteNames.login,
+    initialLocation: RouteNames.splash,
     refreshListenable: GoRouterRefreshStream(sl<SessionCubit>().stream),
     redirect: _authRedirect,
     routes: [
+      GoRoute(
+        path: RouteNames.splash,
+        name: RouteNames.splash,
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: RouteNames.login,
         name: RouteNames.login,
@@ -55,12 +61,14 @@ class AppRouter {
     final isOnAuthPage =
         state.matchedLocation == RouteNames.login ||
         state.matchedLocation == RouteNames.register;
+    final isOnSplash = state.matchedLocation == RouteNames.splash;
 
-    // Session hasn't been determined yet — stay put until checkSession()
-    // resolves, then this redirect re-runs via refreshListenable.
+    // Session hasn't been determined yet — stay on splash until
+    // checkSession() resolves, then this redirect re-runs via
+    // refreshListenable.
     if (sessionState.status == SessionStatus.initial ||
         sessionState.status == SessionStatus.loading) {
-      return null;
+      return isOnSplash ? null : RouteNames.splash;
     }
 
     final isAuthenticated = sessionState.status == SessionStatus.authenticated;
@@ -70,8 +78,8 @@ class AppRouter {
       return RouteNames.login;
     }
 
-    // Logged in but still on auth page → go to workspaces
-    if (isAuthenticated && isOnAuthPage) {
+    // Logged in but still on auth page or splash → go to workspaces
+    if (isAuthenticated && (isOnAuthPage || isOnSplash)) {
       return RouteNames.workspaces;
     }
 
