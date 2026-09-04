@@ -51,12 +51,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAjIv2M25VZlkgKhaTfPBE5PAy1mb6-7G0',
-    appId: '1:817879246720:android:333758461f719465824365',
+    appId: '1:817879246720:android:6ae66bd63fc18ec9824365',
     messagingSenderId: '817879246720',
     projectId: 'trello-clone-1ac91',
     storageBucket: 'trello-clone-1ac91.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAJIewY37HpEbbCZSnFhymV5RBbw6zJSt8',
     appId: '1:817879246720:ios:8c9d86acc7824cf6824365',
