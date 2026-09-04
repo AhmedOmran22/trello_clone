@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../core/di/di_container.dart';
+import '../core/session/session_cubit.dart';
 import '../core/theme/app_theme.dart';
 
 class TrelloCloneApp extends StatelessWidget {
@@ -8,13 +11,16 @@ class TrelloCloneApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      title: 'Trello Clone',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      routerConfig: routerConfig,
+    return BlocProvider<SessionCubit>(
+      create: (_) => sl<SessionCubit>()..checkSession(),
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        title: 'Trello Clone',
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        routerConfig: routerConfig,
+      ),
     );
   }
 }
