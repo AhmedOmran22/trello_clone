@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/constants/route_names.dart';
 import '../core/di/di_container.dart';
+import '../core/session/session_cubit.dart';
+import '../core/session/session_state.dart';
+import '../core/utils/go_router_refresh_stream.dart';
 import '../features/auth/presentation/cubits/auth_cubit.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
@@ -18,6 +20,7 @@ class AppRouter {
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: RouteNames.login,
+    refreshListenable: GoRouterRefreshStream(sl<SessionCubit>().stream),
     redirect: _authRedirect,
     routes: [
       GoRoute(
@@ -45,14 +48,22 @@ class AppRouter {
     ],
   );
 
-  /// Redirects based on auth state
+  /// Redirects based on [SessionCubit] state.
   static String? _authRedirect(BuildContext context, GoRouterState state) {
-    final session = Supabase.instance.client.auth.currentSession;
-    final isAuthenticated = session != null;
+    final sessionState = sl<SessionCubit>().state;
 
     final isOnAuthPage =
         state.matchedLocation == RouteNames.login ||
         state.matchedLocation == RouteNames.register;
+
+    // Session hasn't been determined yet — stay put until checkSession()
+    // resolves, then this redirect re-runs via refreshListenable.
+    if (sessionState.status == SessionStatus.initial ||
+        sessionState.status == SessionStatus.loading) {
+      return null;
+    }
+
+    final isAuthenticated = sessionState.status == SessionStatus.authenticated;
 
     // Not logged in and trying to access protected page → go to login
     if (!isAuthenticated && !isOnAuthPage) {

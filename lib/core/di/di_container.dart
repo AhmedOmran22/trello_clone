@@ -50,6 +50,7 @@ void _initAuth() {
       loginUseCase: sl(),
       registerUseCase: sl(),
       loginWithGoogleUseCase: sl(),
+      sessionCubit: sl(),
     ),
   );
 }

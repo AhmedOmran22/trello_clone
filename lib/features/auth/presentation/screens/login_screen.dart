@@ -53,9 +53,8 @@ class _LoginScreenState extends State<LoginScreen>
     return BlocListener<AuthCubit, AuthState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
-        if (state.status == AuthStatus.success) {
-          context.goNamed(RouteNames.workspaces);
-        }
+        // Navigation on success is handled by the router's redirect, which
+        // reacts to SessionCubit once AuthCubit sets the authenticated user.
         if (state.status == AuthStatus.error) {
           context.showErrorSnackBar(state.error!);
         }

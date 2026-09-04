@@ -12,6 +12,7 @@ class TrelloCloneApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<SessionCubit>(
+      lazy: false,
       create: (_) => sl<SessionCubit>()..checkSession(),
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
