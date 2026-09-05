@@ -2,27 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/context_extensions.dart';
 import '../../../../core/theme/app_theme.dart';
-
-class MockMember {
-  final String id;
-  final String fullName;
-  final String email;
-  final String role;
-  final String? avatarUrl;
-
-  const MockMember({
-    required this.id,
-    required this.fullName,
-    required this.email,
-    required this.role,
-    this.avatarUrl,
-  });
-
-  bool get isOwner => role == 'owner';
-}
+import '../../domain/entity/workspace_member_entity.dart';
 
 class MemberListTile extends StatelessWidget {
-  final MockMember member;
+  final WorkspaceMemberEntity member;
   final bool canRemove;
   final VoidCallback? onRemove;
 
@@ -82,7 +65,7 @@ class MemberListTile extends StatelessWidget {
 }
 
 class _Avatar extends StatelessWidget {
-  final MockMember member;
+  final WorkspaceMemberEntity member;
 
   const _Avatar({required this.member});
 

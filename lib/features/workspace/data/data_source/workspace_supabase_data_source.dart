@@ -16,7 +16,9 @@ class WorkspaceSupabaseDatasource implements WorkspaceRemoteDatasource {
 
       final response = await services.client
           .from(SupabaseTables.workspaceMembers)
-          .select('role, workspaces(*)')
+          .select(
+            'role, workspaces(*, workspace_members(id, user_id, role, profiles(full_name, email, avatar_url)))',
+          )
           .eq('user_id', userId);
 
       return response.map((json) => WorkspaceModel.fromJson(json)).toList();

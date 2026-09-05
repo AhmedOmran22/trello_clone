@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/context_extensions.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../domain/entity/workspace_member_entity.dart';
 import 'add_member_bottom_sheet.dart';
 import 'bottom_sheet_drag_handle.dart';
 import 'delete_workspace_dialog.dart';
@@ -10,14 +11,14 @@ import 'rename_workspace_bottom_sheet.dart';
 
 /// Shows the Workspace Settings bottom sheet.
 /// UI only — all callbacks are optional so the caller can wire up real
-/// data/state management later. [members] is mockup data for now.
+/// data/state management later.
 Future<void> showWorkspaceSettingsBottomSheet(
   BuildContext context, {
   required String workspaceId,
   required String workspaceName,
   required String currentUserRole,
   required String currentUserId,
-  required List<MockMember> members,
+  required List<WorkspaceMemberEntity> members,
   void Function(String email)? onAddMember,
   void Function(String userId)? onRemoveMember,
   void Function(String newName)? onRename,
@@ -53,7 +54,7 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
   final String workspaceName;
   final String currentUserRole;
   final String currentUserId;
-  final List<MockMember> members;
+  final List<WorkspaceMemberEntity> members;
   final void Function(String email)? onAddMember;
   final void Function(String userId)? onRemoveMember;
   final void Function(String newName)? onRename;
@@ -102,7 +103,7 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
 
   Future<void> _confirmRemoveMember(
     BuildContext context,
-    MockMember member,
+    WorkspaceMemberEntity member,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -129,7 +130,7 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
     );
 
     if (confirmed == true) {
-      onRemoveMember?.call(member.id);
+      onRemoveMember?.call(member.userId);
     }
   }
 

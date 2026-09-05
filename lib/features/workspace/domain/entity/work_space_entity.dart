@@ -1,22 +1,21 @@
-import 'package:equatable/equatable.dart';
+import 'workspace_member_entity.dart';
 
-class WorkspaceEntity extends Equatable {
+class WorkspaceEntity {
   final String id;
   final String name;
   final String ownerId;
   final String role;
   final DateTime createdAt;
+  List<WorkspaceMemberEntity> members;
 
-  const WorkspaceEntity({
+  WorkspaceEntity({
     required this.id,
     required this.name,
     required this.ownerId,
     required this.role,
     required this.createdAt,
+    this.members = const [],
   });
 
   bool get isOwner => role == 'owner';
-
-  @override
-  List<Object?> get props => [id, name, ownerId, role, createdAt];
 }
