@@ -93,14 +93,45 @@ class WorkspaceSupabaseDatasource implements WorkspaceRemoteDatasource {
           .from(SupabaseTables.profiles)
           .select('id')
           .eq('email', email)
-          .single();
+          .maybeSingle();
+
+      // Handle: email not found
+      if (userResponse == null) {
+        throw const ServerException(
+          'No user found with this email. They need to create an account first.',
+        );
+      }
+
+      final userId = userResponse['id'] as String;
+
+      // Handle: user already a member
+      final existingMember = await services.client
+          .from(SupabaseTables.workspaceMembers)
+          .select('id')
+          .eq('workspace_id', workspaceId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (existingMember != null) {
+        throw const ServerException(
+          'This user is already a member of this workspace.',
+        );
+      }
+
+      // Handle: adding yourself
+      final currentUserId = services.client.auth.currentUser!.id;
+      if (userId == currentUserId) {
+        throw const ServerException('You are already a member of this workspace.');
+      }
 
       // Step 2: Add to workspace_members
       await services.insert(SupabaseTables.workspaceMembers, {
         'workspace_id': workspaceId,
-        'user_id': userResponse['id'],
+        'user_id': userId,
         'role': 'member',
       });
+    } on ServerException {
+      rethrow;
     } on Exception catch (e) {
       throw ServerException(e.toString());
     }
