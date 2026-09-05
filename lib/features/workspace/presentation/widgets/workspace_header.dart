@@ -8,6 +8,7 @@ class WorkspaceHeader extends StatelessWidget {
   final bool isExpanded;
   final VoidCallback onToggle;
   final VoidCallback onAddBoard;
+  final VoidCallback? onOpenSettings;
 
   const WorkspaceHeader({
     super.key,
@@ -15,6 +16,7 @@ class WorkspaceHeader extends StatelessWidget {
     required this.isExpanded,
     required this.onToggle,
     required this.onAddBoard,
+    this.onOpenSettings,
   });
 
   @override
@@ -42,6 +44,16 @@ class WorkspaceHeader extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onOpenSettings != null)
+                IconButton(
+                  onPressed: onOpenSettings,
+                  icon: const Icon(Icons.settings_outlined),
+                  iconSize: 18,
+                  color: mutedColor,
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
               IconButton(
                 onPressed: onAddBoard,
                 icon: const Icon(Icons.add),

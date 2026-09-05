@@ -9,7 +9,7 @@ platform :android do
     app: "1:817879246720:android:6ae66bd63fc18ec9824365",
     apk_path: "../build/app/outputs/apk/release/app-release.apk",
     testers: "mamdouhanahamada@gmail.com,3mr3laa120@gmail.com",
-    release_notes: "test the application but loging is only works with google so try the app and gimme a feedback",
+    release_notes: "testing the CRUD operations in the workspace feature",
     firebase_cli_token: ENV["FIREBASE_TOKEN"]
   )
   end

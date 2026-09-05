@@ -1,0 +1,354 @@
+import 'package:flutter/material.dart';
+
+import '../../../../core/constants/context_extensions.dart';
+import '../../../../core/theme/app_theme.dart';
+import 'add_member_bottom_sheet.dart';
+import 'bottom_sheet_drag_handle.dart';
+import 'delete_workspace_dialog.dart';
+import 'member_list_tile.dart';
+import 'rename_workspace_bottom_sheet.dart';
+
+/// Shows the Workspace Settings bottom sheet.
+/// UI only — all callbacks are optional so the caller can wire up real
+/// data/state management later. [members] is mockup data for now.
+Future<void> showWorkspaceSettingsBottomSheet(
+  BuildContext context, {
+  required String workspaceId,
+  required String workspaceName,
+  required String currentUserRole,
+  required String currentUserId,
+  required List<MockMember> members,
+  void Function(String email)? onAddMember,
+  void Function(String userId)? onRemoveMember,
+  void Function(String newName)? onRename,
+  VoidCallback? onDelete,
+  VoidCallback? onLeave,
+}) {
+  return showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(AppTheme.borderRadiusXl),
+      ),
+    ),
+    builder: (_) => WorkspaceSettingsBottomSheet(
+      workspaceId: workspaceId,
+      workspaceName: workspaceName,
+      currentUserRole: currentUserRole,
+      currentUserId: currentUserId,
+      members: members,
+      onAddMember: onAddMember,
+      onRemoveMember: onRemoveMember,
+      onRename: onRename,
+      onDelete: onDelete,
+      onLeave: onLeave,
+    ),
+  );
+}
+
+class WorkspaceSettingsBottomSheet extends StatelessWidget {
+  final String workspaceId;
+  final String workspaceName;
+  final String currentUserRole;
+  final String currentUserId;
+  final List<MockMember> members;
+  final void Function(String email)? onAddMember;
+  final void Function(String userId)? onRemoveMember;
+  final void Function(String newName)? onRename;
+  final VoidCallback? onDelete;
+  final VoidCallback? onLeave;
+
+  const WorkspaceSettingsBottomSheet({
+    super.key,
+    required this.workspaceId,
+    required this.workspaceName,
+    required this.currentUserRole,
+    required this.currentUserId,
+    required this.members,
+    this.onAddMember,
+    this.onRemoveMember,
+    this.onRename,
+    this.onDelete,
+    this.onLeave,
+  });
+
+  bool get _isOwner => currentUserRole == 'owner';
+
+  void _openAddMemberSheet(BuildContext context) {
+    showAddMemberBottomSheet(
+      context,
+      workspaceName: workspaceName,
+      onAdd: onAddMember,
+    );
+  }
+
+  void _openRenameSheet(BuildContext context) {
+    showRenameWorkspaceBottomSheet(
+      context,
+      currentName: workspaceName,
+      onSave: onRename,
+    );
+  }
+
+  void _openDeleteDialog(BuildContext context) {
+    showDeleteWorkspaceDialog(
+      context,
+      workspaceName: workspaceName,
+      onConfirm: onDelete,
+    );
+  }
+
+  Future<void> _confirmRemoveMember(
+    BuildContext context,
+    MockMember member,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove Member'),
+        content: Text(
+          'Remove ${member.fullName} from $workspaceName?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: dialogContext.colorScheme.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      onRemoveMember?.call(member.id);
+    }
+  }
+
+  Future<void> _confirmLeaveWorkspace(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Leave Workspace'),
+        content: Text(
+          'Are you sure you want to leave $workspaceName?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: dialogContext.colorScheme.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Leave'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      onLeave?.call();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      maxChildSize: 0.85,
+      minChildSize: 0.4,
+      expand: false,
+      builder: (context, scrollController) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
+          child: ListView(
+            controller: scrollController,
+            children: [
+              const SizedBox(height: AppTheme.spacingSm),
+              const Center(child: BottomSheetDragHandle()),
+              const SizedBox(height: AppTheme.spacingMd),
+              _Header(
+                workspaceName: workspaceName,
+                isOwner: _isOwner,
+                memberCount: members.length,
+              ),
+              const SizedBox(height: AppTheme.spacingLg),
+              _SectionHeader(title: 'Members', count: members.length),
+              const SizedBox(height: AppTheme.spacingSm),
+              for (final member in members)
+                MemberListTile(
+                  member: member,
+                  canRemove: _isOwner && !member.isOwner,
+                  onRemove: () => _confirmRemoveMember(context, member),
+                ),
+              if (_isOwner) ...[
+                const SizedBox(height: AppTheme.spacingSm),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _openAddMemberSheet(context),
+                    icon: const Icon(Icons.person_add_outlined),
+                    label: const Text('Add Member'),
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppTheme.spacingLg),
+              const Divider(),
+              const SizedBox(height: AppTheme.spacingSm),
+              const _SectionHeader(title: 'Settings'),
+              const SizedBox(height: AppTheme.spacingSm),
+              if (_isOwner)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.edit_outlined),
+                  title: const Text('Rename Workspace'),
+                  onTap: () => _openRenameSheet(context),
+                ),
+              if (!_isOwner)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    Icons.exit_to_app,
+                    color: context.colorScheme.error,
+                  ),
+                  title: Text(
+                    'Leave Workspace',
+                    style: TextStyle(color: context.colorScheme.error),
+                  ),
+                  onTap: () => _confirmLeaveWorkspace(context),
+                ),
+              if (_isOwner)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    Icons.delete_outline,
+                    color: context.colorScheme.error,
+                  ),
+                  title: Text(
+                    'Delete Workspace',
+                    style: TextStyle(color: context.colorScheme.error),
+                  ),
+                  onTap: () => _openDeleteDialog(context),
+                ),
+              const SizedBox(height: AppTheme.spacingLg),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  final String workspaceName;
+  final bool isOwner;
+  final int memberCount;
+
+  const _Header({
+    required this.workspaceName,
+    required this.isOwner,
+    required this.memberCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                workspaceName,
+                style: context.textTheme.headlineMedium,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: AppTheme.spacingSm),
+            _RoleChip(isOwner: isOwner),
+          ],
+        ),
+        const SizedBox(height: AppTheme.spacingSm / 2),
+        Text(
+          '$memberCount ${memberCount == 1 ? 'member' : 'members'}',
+          style: context.textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+}
+
+class _RoleChip extends StatelessWidget {
+  final bool isOwner;
+
+  const _RoleChip({required this.isOwner});
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundColor = isOwner
+        ? context.colorScheme.primary.withValues(alpha: 0.12)
+        : context.colorScheme.secondary.withValues(alpha: 0.12);
+    final textColor = isOwner
+        ? context.colorScheme.primary
+        : context.colorScheme.secondary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadiusXl),
+      ),
+      child: Text(
+        isOwner ? 'Owner' : 'Member',
+        style: context.textTheme.bodySmall?.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final int? count;
+
+  const _SectionHeader({required this.title, this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(title, style: context.textTheme.labelLarge),
+        if (count != null) ...[
+          const SizedBox(width: AppTheme.spacingSm / 2),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: context.colorScheme.onSurface.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(AppTheme.borderRadiusXl),
+            ),
+            child: Text(
+              '$count',
+              style: context.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
