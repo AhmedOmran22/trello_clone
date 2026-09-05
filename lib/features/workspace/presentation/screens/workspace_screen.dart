@@ -7,9 +7,9 @@ import '../../../../core/theme/app_theme.dart';
 import '../../domain/entity/work_space_entity.dart';
 import '../cubits/workspace_cubit.dart';
 import '../cubits/workspace_state.dart';
-import '../widgets/create_workspace_bottom_sheet.dart';
-import '../widgets/create_workspace_fab.dart';
-import '../widgets/workspace_section.dart';
+import '../widgets/workspace/create_workspace_bottom_sheet.dart';
+import '../widgets/workspace/create_workspace_fab.dart';
+import '../widgets/workspace/workspace_section.dart';
 
 class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({super.key});
@@ -19,8 +19,6 @@ class WorkspaceScreen extends StatefulWidget {
 }
 
 class _WorkspaceScreenState extends State<WorkspaceScreen> {
-  int _previousWorkspaceCount = 0;
-
   void _openCreateWorkspaceSheet() {
     final userId = context.read<SessionCubit>().state.user!.id;
     final workspaceCubit = context.read<WorkspaceCubit>();
@@ -39,20 +37,22 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       listeners: [
         BlocListener<WorkspaceCubit, WorkspaceState>(
           listenWhen: (previous, current) =>
-              current.status == WorkspaceStatus.error && current.error != null,
+              current.error != null && current.error != previous.error,
           listener: (context, state) => context.showErrorSnackBar(state.error!),
         ),
         BlocListener<WorkspaceCubit, WorkspaceState>(
-          listenWhen: (previous, current) {
-            _previousWorkspaceCount = previous.workspaces.length;
-            return current.status == WorkspaceStatus.success &&
-                previous.workspaces.length != current.workspaces.length;
-          },
+          listenWhen: (previous, current) =>
+              current.action != WorkspaceAction.none &&
+              current.action != previous.action,
           listener: (context, state) {
-            if (state.workspaces.length > _previousWorkspaceCount) {
-              context.showSnackBar('Workspace created successfully');
-            } else {
-              context.showSnackBar('Workspace deleted successfully');
+            switch (state.action) {
+              case WorkspaceAction.created:
+                context.showSnackBar('Workspace created successfully');
+              case WorkspaceAction.deleted:
+                context.showSnackBar('Workspace deleted successfully');
+              case WorkspaceAction.updated:
+              case WorkspaceAction.none:
+                break;
             }
           },
         ),

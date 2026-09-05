@@ -1,5 +1,6 @@
 import '../../../../core/utils/result.dart';
 import '../entity/work_space_entity.dart';
+import '../entity/workspace_member_entity.dart';
 
 abstract class WorkspaceRepo {
   Future<Result<List<WorkspaceEntity>>> getWorkspaces();
@@ -13,7 +14,7 @@ abstract class WorkspaceRepo {
 
   Future<Result<void>> deleteWorkspace({required String id});
 
-  Future<Result<void>> addMember({
+  Future<Result<WorkspaceMemberEntity>> addMember({
     required String workspaceId,
     required String email,
   });

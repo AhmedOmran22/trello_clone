@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/entity/work_space_entity.dart';
 import '../../domain/use_cases/add_members_use_case.dart';
 import '../../domain/use_cases/create_workspace_use_case.dart';
 import '../../domain/use_cases/delete_workspace_use_case.dart';
@@ -49,7 +50,13 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     result.when(
       success: (workspace) {
         final updated = [...state.workspaces, workspace];
-        emit(state.copyWith(status: WorkspaceStatus.success, workspaces: updated));
+        emit(
+          state.copyWith(
+            status: WorkspaceStatus.success,
+            workspaces: updated,
+            action: WorkspaceAction.created,
+          ),
+        );
       },
       error: (failure) => emit(
         state.copyWith(status: WorkspaceStatus.error, error: failure.message),
@@ -82,7 +89,11 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
       success: (_) {
         final workspaces = state.workspaces.where((w) => w.id != id).toList();
         emit(
-          state.copyWith(status: WorkspaceStatus.success, workspaces: workspaces),
+          state.copyWith(
+            status: WorkspaceStatus.success,
+            workspaces: workspaces,
+            action: WorkspaceAction.deleted,
+          ),
         );
       },
       error: (failure) => emit(
@@ -98,13 +109,26 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     final result = await addMemberUseCase(workspaceId: workspaceId, email: email);
 
     result.when(
-      success: (_) {
-        // Refresh workspaces to get updated member count
-        getWorkspaces();
+      success: (member) {
+        final workspaces = state.workspaces.map((w) {
+          if (w.id != workspaceId) return w;
+          return WorkspaceEntity(
+            id: w.id,
+            name: w.name,
+            ownerId: w.ownerId,
+            role: w.role,
+            createdAt: w.createdAt,
+            members: [...w.members, member],
+          );
+        }).toList();
+
+        emit(
+          state.copyWith(status: WorkspaceStatus.success, workspaces: workspaces),
+        );
       },
-      error: (failure) => emit(
-        state.copyWith(status: WorkspaceStatus.error, error: failure.message),
-      ),
+      // Keep the current status/workspaces untouched so the list stays on
+      // screen — only surface the error as a snackbar.
+      error: (failure) => emit(state.copyWith(error: failure.message)),
     );
   }
 

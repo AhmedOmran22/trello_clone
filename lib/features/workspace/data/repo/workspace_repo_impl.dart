@@ -2,6 +2,7 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entity/work_space_entity.dart';
+import '../../domain/entity/workspace_member_entity.dart';
 import '../../domain/repo/workspace_repo.dart';
 import '../data_source/work_space_remote_data_source.dart';
 
@@ -57,13 +58,13 @@ class WorkspaceRepositoryImpl implements WorkspaceRepo {
   }
 
   @override
-  Future<Result<void>> addMember({
+  Future<Result<WorkspaceMemberEntity>> addMember({
     required String workspaceId,
     required String email,
   }) async {
     try {
-      await datasource.addMember(workspaceId: workspaceId, email: email);
-      return Result.success(null);
+      final model = await datasource.addMember(workspaceId: workspaceId, email: email);
+      return Result.success(model.toEntity());
     } on ServerException catch (e) {
       return Result.error(ServerFailure(e.message));
     }

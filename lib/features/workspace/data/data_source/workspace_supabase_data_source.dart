@@ -1,6 +1,7 @@
 import '../../../../core/constants/supabase_tables.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/subabase_services.dart';
+import '../models/workspace_member_model.dart';
 import '../models/workspace_model.dart';
 import 'work_space_remote_data_source.dart';
 
@@ -16,7 +17,9 @@ class WorkspaceSupabaseDatasource implements WorkspaceRemoteDatasource {
 
       final response = await services.client
           .from(SupabaseTables.workspaceMembers)
-          .select('role, workspaces(*)')
+          .select(
+            'role, workspaces(*, workspace_members(id, user_id, role, profiles(full_name, email, avatar_url)))',
+          )
           .eq('user_id', userId);
 
       return response.map((json) => WorkspaceModel.fromJson(json)).toList();
@@ -83,7 +86,7 @@ class WorkspaceSupabaseDatasource implements WorkspaceRemoteDatasource {
   }
 
   @override
-  Future<void> addMember({
+  Future<WorkspaceMemberModel> addMember({
     required String workspaceId,
     required String email,
   }) async {
@@ -93,14 +96,52 @@ class WorkspaceSupabaseDatasource implements WorkspaceRemoteDatasource {
           .from(SupabaseTables.profiles)
           .select('id')
           .eq('email', email)
+          .maybeSingle();
+
+      // Handle: email not found
+      if (userResponse == null) {
+        throw const ServerException(
+          'No user found with this email. They need to create an account first.',
+        );
+      }
+
+      final userId = userResponse['id'] as String;
+
+      // Handle: user already a member
+      final existingMember = await services.client
+          .from(SupabaseTables.workspaceMembers)
+          .select('id')
+          .eq('workspace_id', workspaceId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (existingMember != null) {
+        throw const ServerException(
+          'This user is already a member of this workspace.',
+        );
+      }
+
+      // Handle: adding yourself
+      final currentUserId = services.client.auth.currentUser!.id;
+      if (userId == currentUserId) {
+        throw const ServerException('You are already a member of this workspace.');
+      }
+
+      // Step 2: Add to workspace_members, returning the joined row so the
+      // caller can append it to local state without a full refetch.
+      final inserted = await services.client
+          .from(SupabaseTables.workspaceMembers)
+          .insert({
+            'workspace_id': workspaceId,
+            'user_id': userId,
+            'role': 'member',
+          })
+          .select('id, user_id, role, profiles(full_name, email, avatar_url)')
           .single();
 
-      // Step 2: Add to workspace_members
-      await services.insert(SupabaseTables.workspaceMembers, {
-        'workspace_id': workspaceId,
-        'user_id': userResponse['id'],
-        'role': 'member',
-      });
+      return WorkspaceMemberModel.fromJson(inserted);
+    } on ServerException {
+      rethrow;
     } on Exception catch (e) {
       throw ServerException(e.toString());
     }

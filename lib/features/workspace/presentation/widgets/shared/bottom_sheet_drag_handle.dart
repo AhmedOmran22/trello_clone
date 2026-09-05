@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/context_extensions.dart';
+import '../../../../../core/constants/context_extensions.dart';
 
 /// Small gray pill shown at the top of a modal bottom sheet.
 class BottomSheetDragHandle extends StatelessWidget {

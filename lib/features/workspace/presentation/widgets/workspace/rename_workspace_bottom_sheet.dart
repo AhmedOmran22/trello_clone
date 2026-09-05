@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/context_extensions.dart';
-import '../../../../core/theme/app_theme.dart';
-import 'bottom_sheet_drag_handle.dart';
+import '../../../../../core/constants/context_extensions.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../shared/bottom_sheet_drag_handle.dart';
 
-/// Shows the Create Workspace bottom sheet.
-/// [onSubmit] is invoked with the trimmed workspace name; the caller is
-/// responsible for closing the sheet once the operation is dispatched.
-Future<void> showCreateWorkspaceBottomSheet(
+/// Shows the Rename Workspace bottom sheet, pre-filled with [currentName].
+/// Closes itself, then invokes [onSave] with the trimmed new name so the
+/// caller can dispatch the real rename (e.g. via WorkspaceCubit.updateWorkspace).
+Future<void> showRenameWorkspaceBottomSheet(
   BuildContext context, {
-  void Function(String name)? onSubmit,
+  required String currentName,
+  void Function(String newName)? onSave,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -19,28 +20,50 @@ Future<void> showCreateWorkspaceBottomSheet(
         top: Radius.circular(AppTheme.borderRadiusXl),
       ),
     ),
-    builder: (_) => CreateWorkspaceBottomSheet(onSubmit: onSubmit),
+    builder: (_) =>
+        RenameWorkspaceBottomSheet(currentName: currentName, onSave: onSave),
   );
 }
 
-class CreateWorkspaceBottomSheet extends StatefulWidget {
-  final void Function(String name)? onSubmit;
+class RenameWorkspaceBottomSheet extends StatefulWidget {
+  final String currentName;
+  final void Function(String newName)? onSave;
 
-  const CreateWorkspaceBottomSheet({super.key, this.onSubmit});
+  const RenameWorkspaceBottomSheet({
+    super.key,
+    required this.currentName,
+    this.onSave,
+  });
 
   @override
-  State<CreateWorkspaceBottomSheet> createState() =>
-      _CreateWorkspaceBottomSheetState();
+  State<RenameWorkspaceBottomSheet> createState() =>
+      _RenameWorkspaceBottomSheetState();
 }
 
-class _CreateWorkspaceBottomSheetState
-    extends State<CreateWorkspaceBottomSheet> {
+class _RenameWorkspaceBottomSheetState
+    extends State<RenameWorkspaceBottomSheet> {
   static const _maxNameLength = 50;
 
-  final _controller = TextEditingController();
+  late final TextEditingController _controller;
   final _focusNode = FocusNode();
 
-  bool get _isValid => _controller.text.trim().isNotEmpty;
+  bool get _isValid {
+    final trimmed = _controller.text.trim();
+    return trimmed.isNotEmpty && trimmed != widget.currentName;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.currentName);
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        _controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: _controller.text.length),
+        );
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -49,11 +72,11 @@ class _CreateWorkspaceBottomSheetState
     super.dispose();
   }
 
-  void _handleCreate() {
+  void _handleSave() {
     if (!_isValid) return;
-    final name = _controller.text.trim();
+    final newName = _controller.text.trim();
     Navigator.of(context).pop();
-    widget.onSubmit?.call(name);
+    widget.onSave?.call(newName);
   }
 
   @override
@@ -70,7 +93,7 @@ class _CreateWorkspaceBottomSheetState
               const Center(child: BottomSheetDragHandle()),
               const SizedBox(height: AppTheme.spacingMd),
               Text(
-                'Create Workspace',
+                'Rename Workspace',
                 style: context.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -84,14 +107,14 @@ class _CreateWorkspaceBottomSheetState
                 textInputAction: TextInputAction.done,
                 decoration: const InputDecoration(hintText: 'Workspace name'),
                 onChanged: (_) => setState(() {}),
-                onSubmitted: (_) => _handleCreate(),
+                onSubmitted: (_) => _handleSave(),
               ),
               const SizedBox(height: AppTheme.spacingSm),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isValid ? _handleCreate : null,
-                  child: const Text('Create'),
+                  onPressed: _isValid ? _handleSave : null,
+                  child: const Text('Save'),
                 ),
               ),
               const SizedBox(height: AppTheme.spacingSm / 2),

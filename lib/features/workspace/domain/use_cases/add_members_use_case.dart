@@ -1,4 +1,5 @@
 import '../../../../core/utils/result.dart';
+import '../entity/workspace_member_entity.dart';
 import '../repo/workspace_repo.dart';
 
 class AddMemberUseCase {
@@ -6,7 +7,7 @@ class AddMemberUseCase {
 
   const AddMemberUseCase(this.repository);
 
-  Future<Result<void>> call({
+  Future<Result<WorkspaceMemberEntity>> call({
     required String workspaceId,
     required String email,
   }) {

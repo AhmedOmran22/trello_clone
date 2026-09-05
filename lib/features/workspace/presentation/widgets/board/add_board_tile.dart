@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/context_extensions.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../../core/constants/context_extensions.dart';
+import '../../../../../core/theme/app_theme.dart';
 
 class AddBoardTile extends StatelessWidget {
   final VoidCallback onTap;

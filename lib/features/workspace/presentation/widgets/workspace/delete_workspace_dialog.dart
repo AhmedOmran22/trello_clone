@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/context_extensions.dart';
+import '../../../../../core/constants/context_extensions.dart';
 
 /// Shows the Delete Workspace confirmation dialog for [workspaceName].
 /// UI only — [onConfirm] is invoked when the user confirms deletion so the

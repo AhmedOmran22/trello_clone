@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/context_extensions.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../../core/constants/context_extensions.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../shared/bottom_sheet_drag_handle.dart';
 
-/// Shows the Create Board bottom sheet for [workspaceName].
-/// UI only — [onSubmit] is invoked with the trimmed board name so the
-/// caller can wire up real board creation later.
-Future<void> showCreateBoardBottomSheet(
+/// Shows the Create Workspace bottom sheet.
+/// [onSubmit] is invoked with the trimmed workspace name; the caller is
+/// responsible for closing the sheet once the operation is dispatched.
+Future<void> showCreateWorkspaceBottomSheet(
   BuildContext context, {
-  required String workspaceName,
-  void Function(String boardName)? onSubmit,
+  void Function(String name)? onSubmit,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -19,28 +19,23 @@ Future<void> showCreateBoardBottomSheet(
         top: Radius.circular(AppTheme.borderRadiusXl),
       ),
     ),
-    builder: (_) =>
-        CreateBoardBottomSheet(workspaceName: workspaceName, onSubmit: onSubmit),
+    builder: (_) => CreateWorkspaceBottomSheet(onSubmit: onSubmit),
   );
 }
 
-class CreateBoardBottomSheet extends StatefulWidget {
-  final String workspaceName;
-  final void Function(String boardName)? onSubmit;
+class CreateWorkspaceBottomSheet extends StatefulWidget {
+  final void Function(String name)? onSubmit;
 
-  const CreateBoardBottomSheet({
-    super.key,
-    required this.workspaceName,
-    this.onSubmit,
-  });
+  const CreateWorkspaceBottomSheet({super.key, this.onSubmit});
 
   @override
-  State<CreateBoardBottomSheet> createState() =>
-      _CreateBoardBottomSheetState();
+  State<CreateWorkspaceBottomSheet> createState() =>
+      _CreateWorkspaceBottomSheetState();
 }
 
-class _CreateBoardBottomSheetState extends State<CreateBoardBottomSheet> {
-  static const _maxBoardNameLength = 50;
+class _CreateWorkspaceBottomSheetState
+    extends State<CreateWorkspaceBottomSheet> {
+  static const _maxNameLength = 50;
 
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
@@ -56,8 +51,9 @@ class _CreateBoardBottomSheetState extends State<CreateBoardBottomSheet> {
 
   void _handleCreate() {
     if (!_isValid) return;
-    widget.onSubmit?.call(_controller.text.trim());
+    final name = _controller.text.trim();
     Navigator.of(context).pop();
+    widget.onSubmit?.call(name);
   }
 
   @override
@@ -71,25 +67,22 @@ class _CreateBoardBottomSheetState extends State<CreateBoardBottomSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Center(child: BottomSheetDragHandle()),
+              const SizedBox(height: AppTheme.spacingMd),
               Text(
-                'Create Board',
+                'Create Workspace',
                 style: context.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
-              ),
-              const SizedBox(height: AppTheme.spacingSm / 2),
-              Text(
-                'Create board in ${widget.workspaceName}',
-                style: context.textTheme.bodySmall,
               ),
               const SizedBox(height: AppTheme.spacingLg),
               TextField(
                 controller: _controller,
                 focusNode: _focusNode,
                 autofocus: true,
-                maxLength: _maxBoardNameLength,
+                maxLength: _maxNameLength,
                 textInputAction: TextInputAction.done,
-                decoration: const InputDecoration(hintText: 'Board name'),
+                decoration: const InputDecoration(hintText: 'Workspace name'),
                 onChanged: (_) => setState(() {}),
                 onSubmitted: (_) => _handleCreate(),
               ),
