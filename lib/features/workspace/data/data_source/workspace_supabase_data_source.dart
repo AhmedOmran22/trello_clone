@@ -31,20 +31,15 @@ class WorkspaceSupabaseDatasource implements WorkspaceRemoteDatasource {
     required String userId,
   }) async {
     try {
-      // Step 1: Create the workspace
-      final workspaceResponse = await services.insert(SupabaseTables.workspaces, {
-        'name': name,
-        'owner_id': userId,
-      });
+      final response = await services.client.rpc(
+        'create_workspace',
+        params: {'workspace_name': name},
+      );
 
-      // Step 2: Add the creator as owner in workspace_members
-      await services.insert(SupabaseTables.workspaceMembers, {
-        'workspace_id': workspaceResponse['id'],
-        'user_id': userId,
-        'role': 'owner',
-      });
-
-      return WorkspaceModel.fromWorkspaceJson(workspaceResponse, 'owner');
+      return WorkspaceModel.fromWorkspaceJson(
+        Map<String, dynamic>.from(response),
+        'owner',
+      );
     } on Exception catch (e) {
       throw ServerException(e.toString());
     }
