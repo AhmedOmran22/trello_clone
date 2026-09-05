@@ -5,8 +5,8 @@ import '../../../../core/theme/app_theme.dart';
 import 'bottom_sheet_drag_handle.dart';
 
 /// Shows the Add Member bottom sheet for [workspaceName].
-/// UI only — [onAdd] is invoked with the trimmed email so the caller can
-/// wire up real member invitation later.
+/// Closes itself, then invokes [onAdd] with the trimmed email so the caller
+/// can dispatch the real invite (e.g. via WorkspaceCubit.addMember).
 Future<void> showAddMemberBottomSheet(
   BuildContext context, {
   required String workspaceName,
@@ -45,9 +45,6 @@ class _AddMemberBottomSheetState extends State<AddMemberBottomSheet> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
 
-  bool _isLoading = false;
-  String? _errorText;
-
   bool get _isValidEmail => _emailRegex.hasMatch(_controller.text.trim());
 
   @override
@@ -57,18 +54,11 @@ class _AddMemberBottomSheetState extends State<AddMemberBottomSheet> {
     super.dispose();
   }
 
-  Future<void> _handleAdd() async {
-    if (!_isValidEmail || _isLoading) return;
-    setState(() {
-      _isLoading = true;
-      _errorText = null;
-    });
-
-    widget.onAdd?.call(_controller.text.trim());
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+  void _handleAdd() {
+    if (!_isValidEmail) return;
+    final email = _controller.text.trim();
     Navigator.of(context).pop();
+    widget.onAdd?.call(email);
   }
 
   @override
@@ -103,35 +93,17 @@ class _AddMemberBottomSheetState extends State<AddMemberBottomSheet> {
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.done,
                 decoration: const InputDecoration(hintText: 'Enter email address'),
-                onChanged: (_) => setState(() => _errorText = null),
+                onChanged: (_) => setState(() {}),
                 onSubmitted: (_) => _handleAdd(),
               ),
               const SizedBox(height: AppTheme.spacingMd),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: (_isValidEmail && !_isLoading) ? _handleAdd : null,
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Add'),
+                  onPressed: _isValidEmail ? _handleAdd : null,
+                  child: const Text('Add'),
                 ),
               ),
-              if (_errorText != null) ...[
-                const SizedBox(height: AppTheme.spacingSm),
-                Text(
-                  _errorText!,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: context.colorScheme.error,
-                  ),
-                ),
-              ],
             ],
           ),
         ),

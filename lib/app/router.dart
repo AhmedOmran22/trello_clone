@@ -11,6 +11,7 @@ import '../features/auth/presentation/cubits/auth_cubit.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/navbar/presentation/screens/navbar_screen.dart';
+import '../features/workspace/presentation/cubits/workspace_cubit.dart';
 import 'splash_screen.dart';
 
 class AppRouter {
@@ -46,7 +47,10 @@ class AppRouter {
       GoRoute(
         path: RouteNames.home,
         name: RouteNames.home,
-        builder: (context, state) => const NavbarScreen(),
+        builder: (context, state) => BlocProvider<WorkspaceCubit>(
+          create: (_) => sl<WorkspaceCubit>()..getWorkspaces(),
+          child: const NavbarScreen(),
+        ),
       ),
     ],
   );
