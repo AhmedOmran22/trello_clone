@@ -7,7 +7,10 @@ class CreateWorkspaceUseCase {
 
   const CreateWorkspaceUseCase(this.repository);
 
-  Future<Result<WorkspaceEntity>> call({required String name}) {
-    return repository.createWorkspace(name: name);
+  Future<Result<WorkspaceEntity>> call({
+    required String name,
+    required String userId,
+  }) {
+    return repository.createWorkspace(name: name, userId: userId);
   }
 }

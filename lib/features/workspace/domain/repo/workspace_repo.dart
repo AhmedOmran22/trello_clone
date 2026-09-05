@@ -4,7 +4,7 @@ import '../entity/work_space_entity.dart';
 abstract class WorkspaceRepo {
   Future<Result<List<WorkspaceEntity>>> getWorkspaces();
 
-  Future<Result<WorkspaceEntity>> createWorkspace({required String name});
+  Future<Result<WorkspaceEntity>> createWorkspace({required String name , required String userId});
 
   Future<Result<WorkspaceEntity>> updateWorkspace({
     required String id,
