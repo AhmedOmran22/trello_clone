@@ -49,7 +49,13 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     result.when(
       success: (workspace) {
         final updated = [...state.workspaces, workspace];
-        emit(state.copyWith(status: WorkspaceStatus.success, workspaces: updated));
+        emit(
+          state.copyWith(
+            status: WorkspaceStatus.success,
+            workspaces: updated,
+            action: WorkspaceAction.created,
+          ),
+        );
       },
       error: (failure) => emit(
         state.copyWith(status: WorkspaceStatus.error, error: failure.message),
@@ -82,7 +88,11 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
       success: (_) {
         final workspaces = state.workspaces.where((w) => w.id != id).toList();
         emit(
-          state.copyWith(status: WorkspaceStatus.success, workspaces: workspaces),
+          state.copyWith(
+            status: WorkspaceStatus.success,
+            workspaces: workspaces,
+            action: WorkspaceAction.deleted,
+          ),
         );
       },
       error: (failure) => emit(

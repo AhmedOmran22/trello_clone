@@ -19,8 +19,6 @@ class WorkspaceScreen extends StatefulWidget {
 }
 
 class _WorkspaceScreenState extends State<WorkspaceScreen> {
-  int _previousWorkspaceCount = 0;
-
   void _openCreateWorkspaceSheet() {
     final userId = context.read<SessionCubit>().state.user!.id;
     final workspaceCubit = context.read<WorkspaceCubit>();
@@ -43,16 +41,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           listener: (context, state) => context.showErrorSnackBar(state.error!),
         ),
         BlocListener<WorkspaceCubit, WorkspaceState>(
-          listenWhen: (previous, current) {
-            _previousWorkspaceCount = previous.workspaces.length;
-            return current.status == WorkspaceStatus.success &&
-                previous.workspaces.length != current.workspaces.length;
-          },
+          listenWhen: (previous, current) =>
+              current.action != WorkspaceAction.none &&
+              current.action != previous.action,
           listener: (context, state) {
-            if (state.workspaces.length > _previousWorkspaceCount) {
-              context.showSnackBar('Workspace created successfully');
-            } else {
-              context.showSnackBar('Workspace deleted successfully');
+            switch (state.action) {
+              case WorkspaceAction.created:
+                context.showSnackBar('Workspace created successfully');
+              case WorkspaceAction.deleted:
+                context.showSnackBar('Workspace deleted successfully');
+              case WorkspaceAction.updated:
+              case WorkspaceAction.none:
+                break;
             }
           },
         ),
