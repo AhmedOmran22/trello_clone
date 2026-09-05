@@ -7,9 +7,9 @@ import '../../../../core/theme/app_theme.dart';
 import '../../domain/entity/work_space_entity.dart';
 import '../cubits/workspace_cubit.dart';
 import '../cubits/workspace_state.dart';
-import '../widgets/create_workspace_bottom_sheet.dart';
-import '../widgets/create_workspace_fab.dart';
-import '../widgets/workspace_section.dart';
+import '../widgets/workspace/create_workspace_bottom_sheet.dart';
+import '../widgets/workspace/create_workspace_fab.dart';
+import '../widgets/workspace/workspace_section.dart';
 
 class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({super.key});
@@ -37,7 +37,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       listeners: [
         BlocListener<WorkspaceCubit, WorkspaceState>(
           listenWhen: (previous, current) =>
-              current.status == WorkspaceStatus.error && current.error != null,
+              current.error != null && current.error != previous.error,
           listener: (context, state) => context.showErrorSnackBar(state.error!),
         ),
         BlocListener<WorkspaceCubit, WorkspaceState>(

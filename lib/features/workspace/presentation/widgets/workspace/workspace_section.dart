@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/session/session_cubit.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../domain/entity/work_space_entity.dart';
-import '../cubits/workspace_cubit.dart';
-import 'add_board_tile.dart';
-import 'create_board_bottom_sheet.dart';
+import '../../../../../core/session/session_cubit.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../domain/entity/work_space_entity.dart';
+import '../../cubits/workspace_cubit.dart';
+import '../board/add_board_tile.dart';
+import '../board/create_board_bottom_sheet.dart';
 import 'workspace_header.dart';
 import 'workspace_settings_bottom_sheet.dart';
 
@@ -33,11 +33,8 @@ class _WorkspaceSectionState extends State<WorkspaceSection> {
 
     showWorkspaceSettingsBottomSheet(
       context,
-      workspaceId: workspace.id,
-      workspaceName: workspace.name,
-      currentUserRole: workspace.role,
+      workspace: workspace,
       currentUserId: currentUser.id,
-      members: workspace.members,
       onRename: (newName) {
         workspaceCubit.updateWorkspace(id: workspace.id, name: newName);
         Navigator.pop(context);

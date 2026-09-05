@@ -1,3 +1,4 @@
+import '../models/workspace_member_model.dart';
 import '../models/workspace_model.dart';
 
 abstract class WorkspaceRemoteDatasource {
@@ -12,7 +13,10 @@ abstract class WorkspaceRemoteDatasource {
 
   Future<void> deleteWorkspace({required String id});
 
-  Future<void> addMember({required String workspaceId, required String email});
+  Future<WorkspaceMemberModel> addMember({
+    required String workspaceId,
+    required String email,
+  });
 
   Future<void> removeMember({required String workspaceId, required String userId});
 }

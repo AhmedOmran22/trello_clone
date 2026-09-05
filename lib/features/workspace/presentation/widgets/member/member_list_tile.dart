@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/context_extensions.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../domain/entity/workspace_member_entity.dart';
+import '../../../../../core/constants/context_extensions.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../domain/entity/workspace_member_entity.dart';
 
 class MemberListTile extends StatelessWidget {
   final WorkspaceMemberEntity member;

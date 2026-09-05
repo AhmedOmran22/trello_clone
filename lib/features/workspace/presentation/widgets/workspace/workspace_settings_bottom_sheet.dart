@@ -1,30 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/context_extensions.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../domain/entity/workspace_member_entity.dart';
-import 'add_member_bottom_sheet.dart';
-import 'bottom_sheet_drag_handle.dart';
+import '../../../../../core/constants/context_extensions.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../domain/entity/work_space_entity.dart';
+import '../../../domain/entity/workspace_member_entity.dart';
+import '../../cubits/workspace_cubit.dart';
+import '../../cubits/workspace_state.dart';
+import '../member/add_member_bottom_sheet.dart';
+import '../member/member_list_tile.dart';
+import '../shared/bottom_sheet_drag_handle.dart';
 import 'delete_workspace_dialog.dart';
-import 'member_list_tile.dart';
 import 'rename_workspace_bottom_sheet.dart';
 
 /// Shows the Workspace Settings bottom sheet.
 /// UI only — all callbacks are optional so the caller can wire up real
-/// data/state management later.
+/// data/state management later. Members are read live from [WorkspaceCubit]
+/// so the list updates in place as members are added/removed.
 Future<void> showWorkspaceSettingsBottomSheet(
   BuildContext context, {
-  required String workspaceId,
-  required String workspaceName,
-  required String currentUserRole,
+  required WorkspaceEntity workspace,
   required String currentUserId,
-  required List<WorkspaceMemberEntity> members,
   void Function(String email)? onAddMember,
   void Function(String userId)? onRemoveMember,
   void Function(String newName)? onRename,
   VoidCallback? onDelete,
   VoidCallback? onLeave,
 }) {
+  final workspaceCubit = context.read<WorkspaceCubit>();
+
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -34,27 +38,24 @@ Future<void> showWorkspaceSettingsBottomSheet(
         top: Radius.circular(AppTheme.borderRadiusXl),
       ),
     ),
-    builder: (_) => WorkspaceSettingsBottomSheet(
-      workspaceId: workspaceId,
-      workspaceName: workspaceName,
-      currentUserRole: currentUserRole,
-      currentUserId: currentUserId,
-      members: members,
-      onAddMember: onAddMember,
-      onRemoveMember: onRemoveMember,
-      onRename: onRename,
-      onDelete: onDelete,
-      onLeave: onLeave,
+    builder: (_) => BlocProvider.value(
+      value: workspaceCubit,
+      child: WorkspaceSettingsBottomSheet(
+        workspace: workspace,
+        currentUserId: currentUserId,
+        onAddMember: onAddMember,
+        onRemoveMember: onRemoveMember,
+        onRename: onRename,
+        onDelete: onDelete,
+        onLeave: onLeave,
+      ),
     ),
   );
 }
 
 class WorkspaceSettingsBottomSheet extends StatelessWidget {
-  final String workspaceId;
-  final String workspaceName;
-  final String currentUserRole;
+  final WorkspaceEntity workspace;
   final String currentUserId;
-  final List<WorkspaceMemberEntity> members;
   final void Function(String email)? onAddMember;
   final void Function(String userId)? onRemoveMember;
   final void Function(String newName)? onRename;
@@ -63,11 +64,8 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
 
   const WorkspaceSettingsBottomSheet({
     super.key,
-    required this.workspaceId,
-    required this.workspaceName,
-    required this.currentUserRole,
+    required this.workspace,
     required this.currentUserId,
-    required this.members,
     this.onAddMember,
     this.onRemoveMember,
     this.onRename,
@@ -75,12 +73,12 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
     this.onLeave,
   });
 
-  bool get _isOwner => currentUserRole == 'owner';
+  bool get _isOwner => workspace.isOwner;
 
   void _openAddMemberSheet(BuildContext context) {
     showAddMemberBottomSheet(
       context,
-      workspaceName: workspaceName,
+      workspaceName: workspace.name,
       onAdd: onAddMember,
     );
   }
@@ -88,7 +86,7 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
   void _openRenameSheet(BuildContext context) {
     showRenameWorkspaceBottomSheet(
       context,
-      currentName: workspaceName,
+      currentName: workspace.name,
       onSave: onRename,
     );
   }
@@ -96,7 +94,7 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
   void _openDeleteDialog(BuildContext context) {
     showDeleteWorkspaceDialog(
       context,
-      workspaceName: workspaceName,
+      workspaceName: workspace.name,
       onConfirm: onDelete,
     );
   }
@@ -110,7 +108,7 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Remove Member'),
         content: Text(
-          'Remove ${member.fullName} from $workspaceName?',
+          'Remove ${member.fullName} from ${workspace.name}?',
         ),
         actions: [
           TextButton(
@@ -140,7 +138,7 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Leave Workspace'),
         content: Text(
-          'Are you sure you want to leave $workspaceName?',
+          'Are you sure you want to leave ${workspace.name}?',
         ),
         actions: [
           TextButton(
@@ -164,6 +162,13 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
     }
   }
 
+  List<WorkspaceMemberEntity> _membersOf(WorkspaceState state) {
+    for (final w in state.workspaces) {
+      if (w.id == workspace.id) return w.members;
+    }
+    return const [];
+  }
+
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -172,80 +177,88 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
       minChildSize: 0.4,
       expand: false,
       builder: (context, scrollController) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
-          child: ListView(
-            controller: scrollController,
-            children: [
-              const SizedBox(height: AppTheme.spacingSm),
-              const Center(child: BottomSheetDragHandle()),
-              const SizedBox(height: AppTheme.spacingMd),
-              _Header(
-                workspaceName: workspaceName,
-                isOwner: _isOwner,
-                memberCount: members.length,
+        return BlocBuilder<WorkspaceCubit, WorkspaceState>(
+          buildWhen: (previous, current) =>
+              _membersOf(previous) != _membersOf(current),
+          builder: (context, state) {
+            final members = _membersOf(state);
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
+              child: ListView(
+                controller: scrollController,
+                children: [
+                  const SizedBox(height: AppTheme.spacingSm),
+                  const Center(child: BottomSheetDragHandle()),
+                  const SizedBox(height: AppTheme.spacingMd),
+                  _Header(
+                    workspaceName: workspace.name,
+                    isOwner: _isOwner,
+                    memberCount: members.length,
+                  ),
+                  const SizedBox(height: AppTheme.spacingLg),
+                  _SectionHeader(title: 'Members', count: members.length),
+                  const SizedBox(height: AppTheme.spacingSm),
+                  for (final member in members)
+                    MemberListTile(
+                      member: member,
+                      canRemove: _isOwner && !member.isOwner,
+                      onRemove: () => _confirmRemoveMember(context, member),
+                    ),
+                  if (_isOwner) ...[
+                    const SizedBox(height: AppTheme.spacingSm),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _openAddMemberSheet(context),
+                        icon: const Icon(Icons.person_add_outlined),
+                        label: const Text('Add Member'),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: AppTheme.spacingLg),
+                  const Divider(),
+                  const SizedBox(height: AppTheme.spacingSm),
+                  const _SectionHeader(title: 'Settings'),
+                  const SizedBox(height: AppTheme.spacingSm),
+                  if (_isOwner)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.edit_outlined),
+                      title: const Text('Rename Workspace'),
+                      onTap: () => _openRenameSheet(context),
+                    ),
+                  if (!_isOwner)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        Icons.exit_to_app,
+                        color: context.colorScheme.error,
+                      ),
+                      title: Text(
+                        'Leave Workspace',
+                        style: TextStyle(color: context.colorScheme.error),
+                      ),
+                      onTap: () => _confirmLeaveWorkspace(context),
+                    ),
+                  if (_isOwner)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        Icons.delete_outline,
+                        color: context.colorScheme.error,
+                      ),
+                      title: Text(
+                        'Delete Workspace',
+                        style: TextStyle(color: context.colorScheme.error),
+                      ),
+                      onTap: () => _openDeleteDialog(context),
+                    ),
+                  const SizedBox(height: AppTheme.spacingLg),
+                ],
               ),
-              const SizedBox(height: AppTheme.spacingLg),
-              _SectionHeader(title: 'Members', count: members.length),
-              const SizedBox(height: AppTheme.spacingSm),
-              for (final member in members)
-                MemberListTile(
-                  member: member,
-                  canRemove: _isOwner && !member.isOwner,
-                  onRemove: () => _confirmRemoveMember(context, member),
-                ),
-              if (_isOwner) ...[
-                const SizedBox(height: AppTheme.spacingSm),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _openAddMemberSheet(context),
-                    icon: const Icon(Icons.person_add_outlined),
-                    label: const Text('Add Member'),
-                  ),
-                ),
-              ],
-              const SizedBox(height: AppTheme.spacingLg),
-              const Divider(),
-              const SizedBox(height: AppTheme.spacingSm),
-              const _SectionHeader(title: 'Settings'),
-              const SizedBox(height: AppTheme.spacingSm),
-              if (_isOwner)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.edit_outlined),
-                  title: const Text('Rename Workspace'),
-                  onTap: () => _openRenameSheet(context),
-                ),
-              if (!_isOwner)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    Icons.exit_to_app,
-                    color: context.colorScheme.error,
-                  ),
-                  title: Text(
-                    'Leave Workspace',
-                    style: TextStyle(color: context.colorScheme.error),
-                  ),
-                  onTap: () => _confirmLeaveWorkspace(context),
-                ),
-              if (_isOwner)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    Icons.delete_outline,
-                    color: context.colorScheme.error,
-                  ),
-                  title: Text(
-                    'Delete Workspace',
-                    style: TextStyle(color: context.colorScheme.error),
-                  ),
-                  onTap: () => _openDeleteDialog(context),
-                ),
-              const SizedBox(height: AppTheme.spacingLg),
-            ],
-          ),
+            );
+          },
         );
       },
     );

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/context_extensions.dart';
-import '../../../../core/theme/app_theme.dart';
-import 'bottom_sheet_drag_handle.dart';
+import '../../../../../core/constants/context_extensions.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../shared/bottom_sheet_drag_handle.dart';
 
 /// Shows the Rename Workspace bottom sheet, pre-filled with [currentName].
 /// Closes itself, then invokes [onSave] with the trimmed new name so the

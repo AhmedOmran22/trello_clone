@@ -1,6 +1,7 @@
 import '../../../../core/constants/supabase_tables.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/subabase_services.dart';
+import '../models/workspace_member_model.dart';
 import '../models/workspace_model.dart';
 import 'work_space_remote_data_source.dart';
 
@@ -85,7 +86,7 @@ class WorkspaceSupabaseDatasource implements WorkspaceRemoteDatasource {
   }
 
   @override
-  Future<void> addMember({
+  Future<WorkspaceMemberModel> addMember({
     required String workspaceId,
     required String email,
   }) async {
@@ -126,12 +127,19 @@ class WorkspaceSupabaseDatasource implements WorkspaceRemoteDatasource {
         throw const ServerException('You are already a member of this workspace.');
       }
 
-      // Step 2: Add to workspace_members
-      await services.insert(SupabaseTables.workspaceMembers, {
-        'workspace_id': workspaceId,
-        'user_id': userId,
-        'role': 'member',
-      });
+      // Step 2: Add to workspace_members, returning the joined row so the
+      // caller can append it to local state without a full refetch.
+      final inserted = await services.client
+          .from(SupabaseTables.workspaceMembers)
+          .insert({
+            'workspace_id': workspaceId,
+            'user_id': userId,
+            'role': 'member',
+          })
+          .select('id, user_id, role, profiles(full_name, email, avatar_url)')
+          .single();
+
+      return WorkspaceMemberModel.fromJson(inserted);
     } on ServerException {
       rethrow;
     } on Exception catch (e) {
