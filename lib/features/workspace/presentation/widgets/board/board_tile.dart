@@ -6,8 +6,16 @@ import '../../../../../core/theme/app_theme.dart';
 class BoardTile extends StatelessWidget {
   final String name;
   final Color accentColor;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
-  const BoardTile({super.key, required this.name, required this.accentColor});
+  const BoardTile({
+    super.key,
+    required this.name,
+    required this.accentColor,
+    this.onTap,
+    this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +23,8 @@ class BoardTile extends StatelessWidget {
       color: context.colorScheme.surface,
       borderRadius: BorderRadius.circular(AppTheme.borderRadiusMd),
       child: InkWell(
-        onTap: () {},
+        onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(AppTheme.borderRadiusMd),
         child: Container(
           decoration: BoxDecoration(
@@ -36,11 +45,6 @@ class BoardTile extends StatelessWidget {
           child: Row(
             children: [
               Expanded(child: Text(name, style: context.textTheme.bodyLarge)),
-              Icon(
-                Icons.chevron_right,
-                size: 20,
-                color: context.colorScheme.onSurface.withValues(alpha: 0.4),
-              ),
             ],
           ),
         ),

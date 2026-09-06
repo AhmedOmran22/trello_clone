@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../domain/entity/work_space_entity.dart';
+import '../../domain/entity/workspace_entity.dart';
 
 enum WorkspaceStatus { initial, loading, success, error }
 

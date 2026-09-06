@@ -10,6 +10,14 @@ import '../../features/auth/domain/use_case/register_use_case.dart';
 import '../../features/auth/domain/use_case/get_current_user_use_case.dart';
 import '../../features/auth/domain/use_case/logout_use_case.dart';
 import '../../features/auth/presentation/cubits/auth_cubit.dart';
+import '../../features/boards/data/datasources/board_remote_datasource.dart';
+import '../../features/boards/data/datasources/board_supabase_datasource.dart';
+import '../../features/boards/data/repo/board_repository_impl.dart';
+import '../../features/boards/domain/repo/board_repo.dart';
+import '../../features/boards/domain/usecases/create_board_usecase.dart';
+import '../../features/boards/domain/usecases/delete_board_usecase.dart';
+import '../../features/boards/domain/usecases/update_board_usecase.dart';
+import '../../features/boards/presentation/cubits/board_cubit.dart';
 import '../../features/workspace/data/data_source/work_space_remote_data_source.dart';
 import '../../features/workspace/data/data_source/workspace_supabase_data_source.dart';
 import '../../features/workspace/data/repo/workspace_repo_impl.dart';
@@ -38,6 +46,9 @@ Future<void> initDependencies() async {
 
   // ── Workspace ──
   _initWorkspace();
+
+  // ── Boards ──
+  _initBoard();
 }
 
 void _initAuth() {
@@ -97,6 +108,30 @@ void _initWorkspace() {
       deleteWorkspaceUseCase: sl(),
       addMemberUseCase: sl(),
       removeMemberUseCase: sl(),
+    ),
+  );
+}
+
+void _initBoard() {
+  // Datasource
+  sl.registerLazySingleton<BoardRemoteDatasource>(
+    () => BoardSupabaseDatasource(sl()),
+  );
+
+  // Repository
+  sl.registerLazySingleton<BoardRepo>(() => BoardRepositoryImpl(sl()));
+
+  // Use Cases
+  sl.registerLazySingleton(() => CreateBoardUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateBoardUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteBoardUseCase(sl()));
+
+  // Cubit
+  sl.registerFactory(
+    () => BoardCubit(
+      createBoardUseCase: sl(),
+      updateBoardUseCase: sl(),
+      deleteBoardUseCase: sl(),
     ),
   );
 }

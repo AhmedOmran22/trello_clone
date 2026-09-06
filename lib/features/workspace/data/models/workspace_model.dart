@@ -1,4 +1,5 @@
-import '../../domain/entity/work_space_entity.dart';
+import '../../../boards/data/models/board_model.dart';
+import '../../domain/entity/workspace_entity.dart';
 import 'workspace_member_model.dart';
 
 class WorkspaceModel {
@@ -8,6 +9,7 @@ class WorkspaceModel {
   final String role;
   final DateTime createdAt;
   final List<WorkspaceMemberModel> members;
+  final List<BoardModel> boards;
 
   const WorkspaceModel({
     required this.id,
@@ -16,11 +18,13 @@ class WorkspaceModel {
     required this.role,
     required this.createdAt,
     this.members = const [],
+    this.boards = const [],
   });
 
   factory WorkspaceModel.fromJson(Map<String, dynamic> json) {
     final workspace = json['workspaces'] as Map<String, dynamic>;
     final membersList = workspace['workspace_members'] as List<dynamic>? ?? [];
+    final boardsList = workspace['boards'] as List<dynamic>? ?? [];
 
     return WorkspaceModel(
       id: workspace['id'] as String,
@@ -28,9 +32,11 @@ class WorkspaceModel {
       ownerId: workspace['owner_id'] as String,
       role: json['role'] as String,
       createdAt: DateTime.parse(workspace['created_at'] as String),
-
       members: membersList
           .map((m) => WorkspaceMemberModel.fromJson(m as Map<String, dynamic>))
+          .toList(),
+      boards: boardsList
+          .map((b) => BoardModel.fromJson(b as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -43,6 +49,7 @@ class WorkspaceModel {
       role: role,
       createdAt: DateTime.parse(json['created_at'] as String),
       members: [],
+      boards: [],
     );
   }
 
@@ -54,6 +61,7 @@ class WorkspaceModel {
       role: role,
       createdAt: createdAt,
       members: members.map((m) => m.toEntity()).toList(),
+      boards: boards.map((b) => b.toEntity()).toList(),
     );
   }
 }

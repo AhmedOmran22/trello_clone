@@ -1,7 +1,7 @@
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/result.dart';
-import '../../domain/entity/work_space_entity.dart';
+import '../../domain/entity/workspace_entity.dart';
 import '../../domain/entity/workspace_member_entity.dart';
 import '../../domain/repo/workspace_repo.dart';
 import '../data_source/work_space_remote_data_source.dart';

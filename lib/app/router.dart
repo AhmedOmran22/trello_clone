@@ -10,6 +10,7 @@ import '../core/utils/go_router_refresh_stream.dart';
 import '../features/auth/presentation/cubits/auth_cubit.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
+import '../features/boards/presentation/cubits/board_cubit.dart';
 import '../features/navbar/presentation/screens/navbar_screen.dart';
 import '../features/workspace/presentation/cubits/workspace_cubit.dart';
 import 'splash_screen.dart';
@@ -47,8 +48,13 @@ class AppRouter {
       GoRoute(
         path: RouteNames.home,
         name: RouteNames.home,
-        builder: (context, state) => BlocProvider<WorkspaceCubit>(
-          create: (_) => sl<WorkspaceCubit>()..getWorkspaces(),
+        builder: (context, state) => MultiBlocProvider(
+          providers: [
+            BlocProvider<WorkspaceCubit>(
+              create: (_) => sl<WorkspaceCubit>()..getWorkspaces(),
+            ),
+            BlocProvider<BoardCubit>(create: (_) => sl<BoardCubit>()),
+          ],
           child: const NavbarScreen(),
         ),
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../domain/entity/work_space_entity.dart';
+import '../../../boards/domain/entity/board_entity.dart';
 import '../../domain/use_cases/add_members_use_case.dart';
 import '../../domain/use_cases/create_workspace_use_case.dart';
 import '../../domain/use_cases/delete_workspace_use_case.dart';
@@ -69,8 +69,11 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
 
     result.when(
       success: (updated) {
+        // Only the name comes back as authoritative from the update — merge
+        // it into the existing entry so members/boards already held locally
+        // aren't wiped out.
         final workspaces = state.workspaces.map((w) {
-          return w.id == id ? updated : w;
+          return w.id == id ? w.copyWith(name: updated.name) : w;
         }).toList();
         emit(
           state.copyWith(status: WorkspaceStatus.success, workspaces: workspaces),
@@ -80,6 +83,37 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
         state.copyWith(status: WorkspaceStatus.error, error: failure.message),
       ),
     );
+  }
+
+  /// Reflects a board created via BoardCubit into the owning workspace's
+  /// local board list, so the UI shows it without a full workspace refetch.
+  void addBoardToWorkspace(String workspaceId, BoardEntity board) {
+    final workspaces = state.workspaces.map((w) {
+      if (w.id != workspaceId) return w;
+      return w.copyWith(boards: [...w.boards, board]);
+    }).toList();
+    emit(state.copyWith(workspaces: workspaces));
+  }
+
+  /// Reflects a board renamed via BoardCubit into the owning workspace's
+  /// local board list.
+  void updateBoardInWorkspace(String workspaceId, BoardEntity board) {
+    final workspaces = state.workspaces.map((w) {
+      if (w.id != workspaceId) return w;
+      final boards = w.boards.map((b) => b.id == board.id ? board : b).toList();
+      return w.copyWith(boards: boards);
+    }).toList();
+    emit(state.copyWith(workspaces: workspaces));
+  }
+
+  /// Reflects a board deleted via BoardCubit into the owning workspace's
+  /// local board list.
+  void removeBoardFromWorkspace(String workspaceId, String boardId) {
+    final workspaces = state.workspaces.map((w) {
+      if (w.id != workspaceId) return w;
+      return w.copyWith(boards: w.boards.where((b) => b.id != boardId).toList());
+    }).toList();
+    emit(state.copyWith(workspaces: workspaces));
   }
 
   Future<void> deleteWorkspace({required String id}) async {
@@ -112,14 +146,7 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
       success: (member) {
         final workspaces = state.workspaces.map((w) {
           if (w.id != workspaceId) return w;
-          return WorkspaceEntity(
-            id: w.id,
-            name: w.name,
-            ownerId: w.ownerId,
-            role: w.role,
-            createdAt: w.createdAt,
-            members: [...w.members, member],
-          );
+          return w.copyWith(members: [...w.members, member]);
         }).toList();
 
         emit(

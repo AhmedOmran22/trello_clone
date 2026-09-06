@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/context_extensions.dart';
 import '../../../../core/session/session_cubit.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../domain/entity/work_space_entity.dart';
+import '../../../boards/presentation/cubits/board_cubit.dart';
+import '../../../boards/presentation/cubits/board_state.dart';
+import '../../domain/entity/workspace_entity.dart';
 import '../cubits/workspace_cubit.dart';
 import '../cubits/workspace_state.dart';
 import '../widgets/workspace/create_workspace_bottom_sheet.dart';
@@ -52,6 +54,33 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 context.showSnackBar('Workspace deleted successfully');
               case WorkspaceAction.updated:
               case WorkspaceAction.none:
+                break;
+            }
+          },
+        ),
+        BlocListener<BoardCubit, BoardState>(
+          listenWhen: (previous, current) =>
+              current.error != null && current.error != previous.error,
+          listener: (context, state) => context.showErrorSnackBar(state.error!),
+        ),
+        BlocListener<BoardCubit, BoardState>(
+          listenWhen: (previous, current) =>
+              current.action != BoardAction.none && current.action != previous.action,
+          listener: (context, state) {
+            final workspaceCubit = context.read<WorkspaceCubit>();
+            switch (state.action) {
+              case BoardAction.created:
+                workspaceCubit.addBoardToWorkspace(state.workspaceId!, state.board!);
+                context.showSnackBar('Board created successfully');
+              case BoardAction.updated:
+                workspaceCubit.updateBoardInWorkspace(state.workspaceId!, state.board!);
+              case BoardAction.deleted:
+                workspaceCubit.removeBoardFromWorkspace(
+                  state.workspaceId!,
+                  state.boardId!,
+                );
+                context.showSnackBar('Board deleted successfully');
+              case BoardAction.none:
                 break;
             }
           },
