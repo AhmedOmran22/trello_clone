@@ -1,5 +1,5 @@
 import '../../../../core/utils/result.dart';
-import '../entity/work_space_entity.dart';
+import '../entity/workspace_entity.dart';
 import '../entity/workspace_member_entity.dart';
 
 abstract class WorkspaceRepo {

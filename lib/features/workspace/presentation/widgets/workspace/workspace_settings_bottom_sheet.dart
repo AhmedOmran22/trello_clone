@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/constants/context_extensions.dart';
 import '../../../../../core/theme/app_theme.dart';
-import '../../../domain/entity/work_space_entity.dart';
+import '../../../../boards/domain/entity/board_entity.dart';
+import '../../../../boards/presentation/widgets/board_list_tile.dart';
+import '../../../domain/entity/workspace_entity.dart';
 import '../../../domain/entity/workspace_member_entity.dart';
 import '../../cubits/workspace_cubit.dart';
 import '../../cubits/workspace_state.dart';
@@ -12,6 +14,17 @@ import '../member/member_list_tile.dart';
 import '../shared/bottom_sheet_drag_handle.dart';
 import 'delete_workspace_dialog.dart';
 import 'rename_workspace_bottom_sheet.dart';
+
+/// Cycled by board index — mirrors the palette used for board tiles on the
+/// workspace screen so boards are recognizable in both places.
+const _boardAccentColors = [
+  Colors.blue,
+  Colors.teal,
+  Colors.deepOrange,
+  Colors.purple,
+  Colors.green,
+  Colors.pink,
+];
 
 /// Shows the Workspace Settings bottom sheet.
 /// UI only — all callbacks are optional so the caller can wire up real
@@ -26,6 +39,8 @@ Future<void> showWorkspaceSettingsBottomSheet(
   void Function(String newName)? onRename,
   VoidCallback? onDelete,
   VoidCallback? onLeave,
+  VoidCallback? onAddBoard,
+  void Function(BoardEntity board)? onBoardOptionsTap,
 }) {
   final workspaceCubit = context.read<WorkspaceCubit>();
 
@@ -48,6 +63,8 @@ Future<void> showWorkspaceSettingsBottomSheet(
         onRename: onRename,
         onDelete: onDelete,
         onLeave: onLeave,
+        onAddBoard: onAddBoard,
+        onBoardOptionsTap: onBoardOptionsTap,
       ),
     ),
   );
@@ -61,6 +78,8 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
   final void Function(String newName)? onRename;
   final VoidCallback? onDelete;
   final VoidCallback? onLeave;
+  final VoidCallback? onAddBoard;
+  final void Function(BoardEntity board)? onBoardOptionsTap;
 
   const WorkspaceSettingsBottomSheet({
     super.key,
@@ -71,6 +90,8 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
     this.onRename,
     this.onDelete,
     this.onLeave,
+    this.onAddBoard,
+    this.onBoardOptionsTap,
   });
 
   bool get _isOwner => workspace.isOwner;
@@ -169,6 +190,13 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
     return const [];
   }
 
+  List<BoardEntity> _boardsOf(WorkspaceState state) {
+    for (final w in state.workspaces) {
+      if (w.id == workspace.id) return w.boards;
+    }
+    return const [];
+  }
+
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -179,9 +207,11 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
       builder: (context, scrollController) {
         return BlocBuilder<WorkspaceCubit, WorkspaceState>(
           buildWhen: (previous, current) =>
-              _membersOf(previous) != _membersOf(current),
+              _membersOf(previous) != _membersOf(current) ||
+              _boardsOf(previous) != _boardsOf(current),
           builder: (context, state) {
             final members = _membersOf(state);
+            final boards = _boardsOf(state);
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingLg),
@@ -216,6 +246,29 @@ class WorkspaceSettingsBottomSheet extends StatelessWidget {
                       ),
                     ),
                   ],
+                  const SizedBox(height: AppTheme.spacingLg),
+                  const Divider(),
+                  const SizedBox(height: AppTheme.spacingSm),
+                  _SectionHeader(title: 'Boards', count: boards.length),
+                  const SizedBox(height: AppTheme.spacingSm),
+                  if (boards.isEmpty)
+                    Text('No boards yet', style: context.textTheme.bodySmall)
+                  else
+                    for (var i = 0; i < boards.length; i++)
+                      BoardListTile(
+                        name: boards[i].name,
+                        accentColor: _boardAccentColors[i % _boardAccentColors.length],
+                        onOptionsTap: () => onBoardOptionsTap?.call(boards[i]),
+                      ),
+                  const SizedBox(height: AppTheme.spacingSm),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: onAddBoard,
+                      icon: const Icon(Icons.dashboard_customize_outlined),
+                      label: const Text('Add Board'),
+                    ),
+                  ),
                   const SizedBox(height: AppTheme.spacingLg),
                   const Divider(),
                   const SizedBox(height: AppTheme.spacingSm),

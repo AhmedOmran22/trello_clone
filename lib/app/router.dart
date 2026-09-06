@@ -9,7 +9,7 @@ import '../core/session/session_state.dart';
 import '../core/utils/go_router_refresh_stream.dart';
 import '../features/auth/presentation/cubits/auth_cubit.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
-import '../features/auth/presentation/screens/register_screen.dart';
+import '../features/boards/presentation/cubits/board_cubit.dart';
 import '../features/navbar/presentation/screens/navbar_screen.dart';
 import '../features/workspace/presentation/cubits/workspace_cubit.dart';
 import 'splash_screen.dart';
@@ -37,18 +37,15 @@ class AppRouter {
             BlocProvider(create: (_) => sl<AuthCubit>(), child: const LoginScreen()),
       ),
       GoRoute(
-        path: RouteNames.register,
-        name: RouteNames.register,
-        builder: (context, state) => BlocProvider(
-          create: (_) => sl<AuthCubit>(),
-          child: const RegisterScreen(),
-        ),
-      ),
-      GoRoute(
         path: RouteNames.home,
         name: RouteNames.home,
-        builder: (context, state) => BlocProvider<WorkspaceCubit>(
-          create: (_) => sl<WorkspaceCubit>()..getWorkspaces(),
+        builder: (context, state) => MultiBlocProvider(
+          providers: [
+            BlocProvider<WorkspaceCubit>(
+              create: (_) => sl<WorkspaceCubit>()..getWorkspaces(),
+            ),
+            BlocProvider<BoardCubit>(create: (_) => sl<BoardCubit>()),
+          ],
           child: const NavbarScreen(),
         ),
       ),
@@ -59,9 +56,7 @@ class AppRouter {
   static String? _authRedirect(BuildContext context, GoRouterState state) {
     final sessionState = sl<SessionCubit>().state;
 
-    final isOnAuthPage =
-        state.matchedLocation == RouteNames.login ||
-        state.matchedLocation == RouteNames.register;
+    final isOnAuthPage = state.matchedLocation == RouteNames.login;
     final isOnSplash = state.matchedLocation == RouteNames.splash;
 
     // Session hasn't been determined yet — stay on splash until
