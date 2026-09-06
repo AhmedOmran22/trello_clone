@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 
 import '../../../../core/constants/supabase_tables.dart';
@@ -12,48 +10,6 @@ class AuthSupabaseDatasource implements AuthRemoteDatasource {
   final SupabaseServices services;
 
   AuthSupabaseDatasource(this.services);
-
-  @override
-  Future<UserModel> login({required String email, required String password}) async {
-    try {
-      final response = await services.client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
-
-      if (response.user == null) {
-        throw const AuthException('Login failed. No user returned.');
-      }
-
-      return await _fetchProfile(response.user!.id);
-    } on AuthApiException catch (e) {
-      throw AuthException(e.message);
-    }
-  }
-
-  @override
-  Future<UserModel> register({
-    required String email,
-    required String password,
-    required String fullName,
-  }) async {
-    try {
-      final response = await services.client.auth.signUp(
-        email: email,
-        password: password,
-        data: {'full_name': fullName},
-      );
-
-      if (response.user == null) {
-        throw const AuthException('Registration failed. No user returned.');
-      }
-
-      return await _fetchProfile(response.user!.id);
-    } on AuthApiException catch (e) {
-      log(e.toString());
-      throw AuthException(e.message);
-    }
-  }
 
   @override
   Future<UserModel> loginWithGoogle() async {
