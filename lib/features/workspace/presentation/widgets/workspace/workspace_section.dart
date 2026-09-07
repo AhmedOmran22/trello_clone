@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../core/constants/context_extensions.dart';
+import '../../../../../core/constants/route_names.dart';
 import '../../../../../core/session/session_cubit.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../boards/domain/entity/board_entity.dart';
@@ -86,6 +88,10 @@ class _WorkspaceSectionState extends State<WorkspaceSection> {
         Navigator.pop(context);
       },
     );
+  }
+
+  void _openBoard(BoardEntity board) {
+    context.push('${RouteNames.board}/${board.id}', extra: board.name);
   }
 
   void _openBoardOptions(BoardEntity board) {
@@ -180,6 +186,7 @@ class _WorkspaceSectionState extends State<WorkspaceSection> {
                   BoardTile(
                     name: boards[i].name,
                     accentColor: _boardAccentColors[i % _boardAccentColors.length],
+                    onTap: () => _openBoard(boards[i]),
                     onLongPress: () => _openBoardOptions(boards[i]),
                   ),
                   const SizedBox(height: AppTheme.spacingSm),
