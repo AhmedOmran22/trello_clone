@@ -8,8 +8,8 @@ platform :android do
     firebase_app_distribution(
     app: "1:817879246720:android:6ae66bd63fc18ec9824365",
     apk_path: "../build/app/outputs/apk/release/app-release.apk",
-    testers: "mamdouhanahamada@gmail.com,3mr3laa120@gmail.com",
-    release_notes: "testing the CRUD operations in the workspace feature",
+    testers: "mamdouhanahamada@gmail.com,ziadmagdy718@gmail.com",
+    release_notes: "Testing boards and drag drop tasks localy instead next step will be remote ",
     firebase_cli_token: ENV["FIREBASE_TOKEN"]
   )
   end
