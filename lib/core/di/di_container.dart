@@ -13,8 +13,19 @@ import '../../features/boards/data/datasources/board_supabase_datasource.dart';
 import '../../features/boards/data/repo/board_repository_impl.dart';
 import '../../features/boards/domain/repo/board_repo.dart';
 import '../../features/boards/domain/usecases/create_board_usecase.dart';
+import '../../features/boards/domain/usecases/create_column_usecase.dart';
+import '../../features/boards/domain/usecases/create_task_usecase.dart';
 import '../../features/boards/domain/usecases/delete_board_usecase.dart';
+import '../../features/boards/domain/usecases/delete_column_usecase.dart';
+import '../../features/boards/domain/usecases/delete_task_usecase.dart';
+import '../../features/boards/domain/usecases/get_board_usecase.dart';
+import '../../features/boards/domain/usecases/move_task_usecase.dart';
+import '../../features/boards/domain/usecases/rename_column_usecase.dart';
+import '../../features/boards/domain/usecases/reorder_columns_usecase.dart';
+import '../../features/boards/domain/usecases/reorder_tasks_usecase.dart';
 import '../../features/boards/domain/usecases/update_board_usecase.dart';
+import '../../features/boards/domain/usecases/update_task_usecase.dart';
+import '../../features/boards/presentation/bloc/board_bloc.dart';
 import '../../features/boards/presentation/cubits/board_cubit.dart';
 import '../../features/workspace/data/data_source/work_space_remote_data_source.dart';
 import '../../features/workspace/data/data_source/workspace_supabase_data_source.dart';
@@ -116,6 +127,16 @@ void _initBoard() {
   sl.registerLazySingleton(() => CreateBoardUseCase(sl()));
   sl.registerLazySingleton(() => UpdateBoardUseCase(sl()));
   sl.registerLazySingleton(() => DeleteBoardUseCase(sl()));
+  sl.registerLazySingleton(() => GetBoardUseCase(sl()));
+  sl.registerLazySingleton(() => CreateColumnUseCase(sl()));
+  sl.registerLazySingleton(() => RenameColumnUseCase(sl()));
+  sl.registerLazySingleton(() => ReorderColumnsUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteColumnUseCase(sl()));
+  sl.registerLazySingleton(() => CreateTaskUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateTaskUseCase(sl()));
+  sl.registerLazySingleton(() => MoveTaskUseCase(sl()));
+  sl.registerLazySingleton(() => ReorderTasksUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteTaskUseCase(sl()));
 
   // Cubit
   sl.registerFactory(
@@ -123,6 +144,24 @@ void _initBoard() {
       createBoardUseCase: sl(),
       updateBoardUseCase: sl(),
       deleteBoardUseCase: sl(),
+    ),
+  );
+
+  // Bloc (per-board instance, parameterized by boardId)
+  sl.registerFactoryParam<BoardBloc, String, void>(
+    (boardId, _) => BoardBloc(
+      boardId: boardId,
+      boardRepo: sl(),
+      getBoardUseCase: sl(),
+      createColumnUseCase: sl(),
+      renameColumnUseCase: sl(),
+      reorderColumnsUseCase: sl(),
+      deleteColumnUseCase: sl(),
+      createTaskUseCase: sl(),
+      updateTaskUseCase: sl(),
+      moveTaskUseCase: sl(),
+      reorderTasksUseCase: sl(),
+      deleteTaskUseCase: sl(),
     ),
   );
 }

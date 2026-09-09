@@ -17,6 +17,22 @@ class BoardEntity extends Equatable {
     this.columns = const [],
   });
 
+  BoardEntity copyWith({
+    String? id,
+    String? workspaceId,
+    String? name,
+    DateTime? createdAt,
+    List<BoardColumnEntity>? columns,
+  }) {
+    return BoardEntity(
+      id: id ?? this.id,
+      workspaceId: workspaceId ?? this.workspaceId,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      columns: columns ?? this.columns,
+    );
+  }
+
   @override
   List<Object?> get props => [id, workspaceId, name, createdAt, columns];
 }
