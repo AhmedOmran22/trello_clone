@@ -88,7 +88,9 @@ class BoardColumnWidget extends StatelessWidget {
                   onLongPress: onReorderColumns,
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingSm / 2),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppTheme.spacingSm / 2,
+                    ),
                     decoration: BoxDecoration(
                       color: headerBackground,
                       borderRadius: const BorderRadius.vertical(
@@ -99,7 +101,9 @@ class BoardColumnWidget extends StatelessWidget {
                       children: [
                         InkWell(
                           onTap: onReorderColumns,
-                          borderRadius: BorderRadius.circular(AppTheme.borderRadiusSm),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadiusSm,
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.all(AppTheme.spacingSm),
                             child: Icon(
@@ -112,15 +116,18 @@ class BoardColumnWidget extends StatelessWidget {
                         Expanded(
                           child: Text(
                             '${column.name} (${column.tasks.length})',
-                            style: context.textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
+                            style: context.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         InkWell(
                           onTap: onMoreOptions,
-                          borderRadius: BorderRadius.circular(AppTheme.borderRadiusSm),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadiusSm,
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.all(AppTheme.spacingSm),
                             child: Icon(
@@ -135,12 +142,19 @@ class BoardColumnWidget extends StatelessWidget {
                 ),
                 Flexible(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingSm),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppTheme.spacingSm,
+                    ),
                     child: column.tasks.isEmpty
                         ? Padding(
-                            padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingLg),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppTheme.spacingLg,
+                            ),
                             child: Center(
-                              child: Text('No tasks yet', style: context.textTheme.bodySmall),
+                              child: Text(
+                                'No tasks yet',
+                                style: context.textTheme.bodySmall,
+                              ),
                             ),
                           )
                         : Column(
@@ -163,7 +177,11 @@ class BoardColumnWidget extends StatelessWidget {
                     padding: const EdgeInsets.all(AppTheme.spacingSm),
                     child: Row(
                       children: [
-                        Icon(Icons.add, size: 18, color: scheme.onSurface.withValues(alpha: 0.6)),
+                        Icon(
+                          Icons.add,
+                          size: 18,
+                          color: scheme.onSurface.withValues(alpha: 0.6),
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Add a card',
