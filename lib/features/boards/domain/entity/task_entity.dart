@@ -27,6 +27,34 @@ class TaskEntity extends Equatable {
     required this.createdAt,
   });
 
+  TaskEntity copyWith({
+    String? id,
+    String? columnId,
+    String? title,
+    String? description,
+    String? priority,
+    int? position,
+    DateTime? dueDate,
+    String? assigneeId,
+    String? assigneeName,
+    String? assigneeAvatarUrl,
+    DateTime? createdAt,
+  }) {
+    return TaskEntity(
+      id: id ?? this.id,
+      columnId: columnId ?? this.columnId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      priority: priority ?? this.priority,
+      position: position ?? this.position,
+      dueDate: dueDate ?? this.dueDate,
+      assigneeId: assigneeId ?? this.assigneeId,
+      assigneeName: assigneeName ?? this.assigneeName,
+      assigneeAvatarUrl: assigneeAvatarUrl ?? this.assigneeAvatarUrl,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
   bool get isOverdue =>
       dueDate != null && dueDate!.isBefore(DateTime.now());
 

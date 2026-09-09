@@ -9,6 +9,7 @@ import '../core/session/session_state.dart';
 import '../core/utils/go_router_refresh_stream.dart';
 import '../features/auth/presentation/cubits/auth_cubit.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/boards/presentation/bloc/board_bloc.dart';
 import '../features/boards/presentation/cubits/board_cubit.dart';
 import '../features/boards/presentation/screens/board_screen.dart';
 import '../features/navbar/presentation/screens/navbar_screen.dart';
@@ -56,7 +57,10 @@ class AppRouter {
         builder: (context, state) {
           final boardId = state.pathParameters['boardId']!;
           final boardName = state.extra as String? ?? 'Board';
-          return BoardScreen(boardId: boardId, boardName: boardName);
+          return BlocProvider<BoardBloc>(
+            create: (_) => sl<BoardBloc>(param1: boardId),
+            child: BoardScreen(boardId: boardId, boardName: boardName),
+          );
         },
       ),
     ],
