@@ -1,4 +1,3 @@
-import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entity/board_column_entity.dart';
@@ -20,8 +19,8 @@ class BoardRepositoryImpl implements BoardRepo {
     try {
       final model = await datasource.createBoard(workspaceId: workspaceId, name: name);
       return Result.success(model.toEntity());
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 
@@ -33,8 +32,8 @@ class BoardRepositoryImpl implements BoardRepo {
     try {
       final model = await datasource.updateBoard(id: id, name: name);
       return Result.success(model.toEntity());
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 
@@ -43,8 +42,8 @@ class BoardRepositoryImpl implements BoardRepo {
     try {
       await datasource.deleteBoard(id: id);
       return Result.success(null);
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 
@@ -55,8 +54,8 @@ class BoardRepositoryImpl implements BoardRepo {
     try {
       final model = await datasource.getBoard(boardId: boardId);
       return Result.success(model.toEntity());
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 
@@ -75,8 +74,8 @@ class BoardRepositoryImpl implements BoardRepo {
         position: position,
       );
       return Result.success(model.toEntity());
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 
@@ -88,8 +87,8 @@ class BoardRepositoryImpl implements BoardRepo {
     try {
       final model = await datasource.renameColumn(columnId: columnId, name: name);
       return Result.success(model.toEntity());
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 
@@ -100,8 +99,8 @@ class BoardRepositoryImpl implements BoardRepo {
         columns: columns.map((c) => {'id': c.id, 'position': c.position}).toList(),
       );
       return Result.success(null);
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 
@@ -110,8 +109,8 @@ class BoardRepositoryImpl implements BoardRepo {
     try {
       await datasource.deleteColumn(columnId: columnId);
       return Result.success(null);
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 
@@ -138,8 +137,8 @@ class BoardRepositoryImpl implements BoardRepo {
         assigneeId: assigneeId,
       );
       return Result.success(model.toEntity());
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 
@@ -162,8 +161,8 @@ class BoardRepositoryImpl implements BoardRepo {
         assigneeId: assigneeId,
       );
       return Result.success(model.toEntity());
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 
@@ -180,8 +179,8 @@ class BoardRepositoryImpl implements BoardRepo {
         newPosition: newPosition,
       );
       return Result.success(null);
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 
@@ -195,8 +194,8 @@ class BoardRepositoryImpl implements BoardRepo {
         tasks: tasks.map((t) => {'id': t.id, 'position': t.position}).toList(),
       );
       return Result.success(null);
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 
@@ -205,8 +204,8 @@ class BoardRepositoryImpl implements BoardRepo {
     try {
       await datasource.deleteTask(taskId: taskId);
       return Result.success(null);
-    } on ServerException catch (e) {
-      return Result.error(ServerFailure(e.message));
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
     }
   }
 

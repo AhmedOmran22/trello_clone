@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/errors/failures.dart';
 import '../../domain/entity/board_column_entity.dart';
 import '../../domain/entity/task_entity.dart';
 import '../../domain/repo/board_repo.dart';
@@ -78,9 +79,11 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     return merged;
   }
 
-  void _emitMerged(Emitter<BoardState> emit) {
+  void _emitMerged(Emitter<BoardState> emit, {String? actionError}) {
     final loaded = _loaded;
-    if (loaded != null) emit(loaded.copyWith(columns: _mergedColumns()));
+    if (loaded != null) {
+      emit(loaded.copyWith(columns: _mergedColumns(), actionError: actionError));
+    }
   }
 
   // ── Board load + realtime subscriptions ──
@@ -105,7 +108,7 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
         await _subscribeToColumns(board.id);
       },
       error: (failure) async {
-        emit(BoardError(message: failure.message));
+        emit(BoardError(message: failure.message, isNetworkError: failure is NetworkFailure));
       },
     );
   }
@@ -195,15 +198,17 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
       position: previous.length,
     );
 
+    String? errorMessage;
     result.when(
       success: (column) {
         _columnsMeta = [for (final c in _columnsMeta) if (c.id == tempId) column else c];
       },
-      error: (_) {
+      error: (failure) {
         _columnsMeta = previous;
+        errorMessage = failure.message;
       },
     );
-    _emitMerged(emit);
+    _emitMerged(emit, actionError: errorMessage);
   }
 
   Future<void> _onColumnRenamed(ColumnRenamed event, Emitter<BoardState> emit) async {
@@ -305,6 +310,7 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
       assigneeId: event.assigneeId,
     );
 
+    String? errorMessage;
     result.when(
       success: (task) {
         final tasks = _tasksByColumn[event.columnId] ?? const [];
@@ -313,11 +319,12 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
           event.columnId: [for (final t in tasks) if (t.id == tempId) task else t],
         };
       },
-      error: (_) {
+      error: (failure) {
         _tasksByColumn = previous;
+        errorMessage = failure.message;
       },
     );
-    _emitMerged(emit);
+    _emitMerged(emit, actionError: errorMessage);
   }
 
   Future<void> _onTaskUpdated(TaskUpdated event, Emitter<BoardState> emit) async {

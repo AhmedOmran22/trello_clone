@@ -202,89 +202,102 @@ class _BoardScreenState extends State<BoardScreen> {
           IconButton(icon: const Icon(Icons.add), onPressed: () => _openAddColumnSheet(bloc)),
         ],
       ),
-      body: BlocBuilder<BoardBloc, BoardState>(
-        builder: (context, state) {
-          if (state is BoardError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppTheme.spacingLg),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+      body: BlocListener<BoardBloc, BoardState>(
+        listenWhen: (previous, current) =>
+            current is BoardLoaded &&
+            current.actionError != null &&
+            !(previous is BoardLoaded && previous.actionError == current.actionError),
+        listener: (context, state) {
+          context.showErrorSnackBar((state as BoardLoaded).actionError!);
+        },
+        child: BlocBuilder<BoardBloc, BoardState>(
+          builder: (context, state) {
+            if (state is BoardError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppTheme.spacingLg),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        state.isNetworkError ? Icons.wifi_off : Icons.error_outline,
+                        size: 48,
+                        color: context.colorScheme.error,
+                      ),
+                      const SizedBox(height: AppTheme.spacingMd),
+                      Text(state.message, textAlign: TextAlign.center),
+                      const SizedBox(height: AppTheme.spacingMd),
+                      ElevatedButton(
+                        onPressed: () => bloc.add(BoardLoadRequested(widget.boardId)),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            if (state is! BoardLoaded) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final columns = state.columns;
+
+            return NotificationListener<ScrollEndNotification>(
+              onNotification: (notification) {
+                if (!_horizontalController.hasClients) return false;
+                final position = _horizontalController.position;
+                final page = (position.pixels / itemExtent).round();
+                final target = (page * itemExtent).clamp(0.0, position.maxScrollExtent);
+                if ((target - position.pixels).abs() > 1) {
+                  _horizontalController.animateTo(
+                    target,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
+                  );
+                }
+                return false;
+              },
+              child: SingleChildScrollView(
+                controller: _horizontalController,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingMd),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.error_outline, size: 48, color: context.colorScheme.error),
-                    const SizedBox(height: AppTheme.spacingMd),
-                    Text(state.message, textAlign: TextAlign.center),
-                    const SizedBox(height: AppTheme.spacingMd),
-                    ElevatedButton(
-                      onPressed: () => bloc.add(BoardLoadRequested(widget.boardId)),
-                      child: const Text('Retry'),
+                    for (final column in columns)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: gap),
+                        child: BoardColumnWidget(
+                          column: column,
+                          columnWidth: columnWidth,
+                          onTaskTap: (task) => _openTaskDetail(bloc, column, columns, task),
+                          onDropTask: (data, index) => bloc.add(
+                            TaskMoved(
+                              taskId: data.task.id,
+                              fromColumnId: data.sourceColumnId,
+                              targetColumnId: column.id,
+                              newPosition: index,
+                            ),
+                          ),
+                          onAddCard: () => _openAddTaskSheet(bloc, column),
+                          onMoreOptions: () => _openColumnOptions(bloc, column, columns),
+                          onReorderColumns: () => _openReorderColumnsSheet(bloc, columns),
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: gap),
+                      child: SizedBox(
+                        width: columnWidth,
+                        child: _AddColumnCard(onTap: () => _openAddColumnSheet(bloc)),
+                      ),
                     ),
                   ],
                 ),
               ),
             );
-          }
-
-          if (state is! BoardLoaded) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final columns = state.columns;
-
-          return NotificationListener<ScrollEndNotification>(
-            onNotification: (notification) {
-              if (!_horizontalController.hasClients) return false;
-              final position = _horizontalController.position;
-              final page = (position.pixels / itemExtent).round();
-              final target = (page * itemExtent).clamp(0.0, position.maxScrollExtent);
-              if ((target - position.pixels).abs() > 1) {
-                _horizontalController.animateTo(
-                  target,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOut,
-                );
-              }
-              return false;
-            },
-            child: SingleChildScrollView(
-              controller: _horizontalController,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingMd),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final column in columns)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: gap),
-                      child: BoardColumnWidget(
-                        column: column,
-                        columnWidth: columnWidth,
-                        onTaskTap: (task) => _openTaskDetail(bloc, column, columns, task),
-                        onDropTask: (data, index) => bloc.add(
-                          TaskMoved(
-                            taskId: data.task.id,
-                            fromColumnId: data.sourceColumnId,
-                            targetColumnId: column.id,
-                            newPosition: index,
-                          ),
-                        ),
-                        onAddCard: () => _openAddTaskSheet(bloc, column),
-                        onMoreOptions: () => _openColumnOptions(bloc, column, columns),
-                        onReorderColumns: () => _openReorderColumnsSheet(bloc, columns),
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: gap),
-                    child: SizedBox(
-                      width: columnWidth,
-                      child: _AddColumnCard(onTap: () => _openAddColumnSheet(bloc)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }

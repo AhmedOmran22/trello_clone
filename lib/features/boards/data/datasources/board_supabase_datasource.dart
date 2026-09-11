@@ -24,7 +24,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
 
       return BoardModel.fromJson(response);
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
@@ -37,7 +37,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
 
       return BoardModel.fromJson(response);
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
@@ -46,7 +46,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
     try {
       await services.delete(SupabaseTables.boards, id);
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
@@ -65,7 +65,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
 
       return BoardModel.fromJson(response);
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
@@ -86,7 +86,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
 
       return BoardColumnModel.fromJson(response);
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
@@ -102,7 +102,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
 
       return BoardColumnModel.fromJson(response);
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
@@ -115,7 +115,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
         });
       }
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
@@ -124,7 +124,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
     try {
       await services.delete(SupabaseTables.boardColumns, columnId);
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
@@ -165,7 +165,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
 
       return TaskModel.fromJson(response);
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
@@ -197,7 +197,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
 
       return TaskModel.fromJson(response);
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
@@ -213,7 +213,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
         'position': newPosition,
       });
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
@@ -226,7 +226,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
         });
       }
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
@@ -235,7 +235,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
     try {
       await services.delete(SupabaseTables.tasks, taskId);
     } on Exception catch (e) {
-      throw ServerException(e.toString());
+      throw mapToAppException(e);
     }
   }
 
