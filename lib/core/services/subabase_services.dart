@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../errors/exceptions.dart';
@@ -24,6 +26,8 @@ class SupabaseServices {
 
       final response = await query;
       return List<Map<String, dynamic>>.from(response);
+    } on SocketException catch (_) {
+      throw const NetworkException(noInternetMessage);
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
     }
@@ -43,6 +47,8 @@ class SupabaseServices {
           .single();
 
       return response;
+    } on SocketException catch (_) {
+      throw const NetworkException(noInternetMessage);
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
     }
@@ -57,6 +63,8 @@ class SupabaseServices {
       final response = await _client.from(table).insert(data).select().single();
 
       return response;
+    } on SocketException catch (_) {
+      throw const NetworkException(noInternetMessage);
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
     }
@@ -71,6 +79,8 @@ class SupabaseServices {
       final response = await _client.from(table).insert(data).select();
 
       return List<Map<String, dynamic>>.from(response);
+    } on SocketException catch (_) {
+      throw const NetworkException(noInternetMessage);
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
     }
@@ -91,6 +101,8 @@ class SupabaseServices {
           .single();
 
       return response;
+    } on SocketException catch (_) {
+      throw const NetworkException(noInternetMessage);
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
     }
@@ -100,6 +112,8 @@ class SupabaseServices {
   Future<void> delete(String table, String id) async {
     try {
       await _client.from(table).delete().eq('id', id);
+    } on SocketException catch (_) {
+      throw const NetworkException(noInternetMessage);
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
     }
@@ -114,6 +128,8 @@ class SupabaseServices {
       final response = await _client.from(table).upsert(data).select().single();
 
       return response;
+    } on SocketException catch (_) {
+      throw const NetworkException(noInternetMessage);
     } on PostgrestException catch (e) {
       throw ServerException(e.message);
     }

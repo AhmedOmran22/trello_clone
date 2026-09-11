@@ -27,6 +27,11 @@ import '../../features/boards/domain/usecases/update_board_usecase.dart';
 import '../../features/boards/domain/usecases/update_task_usecase.dart';
 import '../../features/boards/presentation/bloc/board_bloc.dart';
 import '../../features/boards/presentation/cubits/board_cubit.dart';
+import '../../features/notifications/data/datasource/notification_remote_datasource.dart';
+import '../../features/notifications/data/datasource/notification_supabase_data_source.dart';
+import '../../features/notifications/data/repos/notification_repo_impl.dart';
+import '../../features/notifications/domain/repo/notification_repo.dart';
+import '../../features/notifications/presentation/cubits/notification_cubit.dart';
 import '../../features/workspace/data/data_source/work_space_remote_data_source.dart';
 import '../../features/workspace/data/data_source/workspace_supabase_data_source.dart';
 import '../../features/workspace/data/repo/workspace_repo_impl.dart';
@@ -58,6 +63,9 @@ Future<void> initDependencies() async {
 
   // ── Boards ──
   _initBoard();
+
+  // ── Notifications ──
+  _initNotifications();
 }
 
 void _initAuth() {
@@ -164,4 +172,17 @@ void _initBoard() {
       deleteTaskUseCase: sl(),
     ),
   );
+}
+
+void _initNotifications() {
+  // Datasource
+  sl.registerLazySingleton<NotificationRemoteDatasource>(
+    () => NotificationSupabaseDatasource(sl()),
+  );
+
+  // Repository
+  sl.registerLazySingleton<NotificationRepo>(() => NotificationRepositoryImpl(sl()));
+
+  // Cubit
+  sl.registerFactory(() => NotificationCubit(repository: sl()));
 }
