@@ -9,7 +9,7 @@ platform :android do
     app: "1:817879246720:android:6ae66bd63fc18ec9824365",
     apk_path: "../build/app/outputs/apk/release/app-release.apk",
     testers: "mamdouhanahamada@gmail.com,ziadmagdy718@gmail.com",
-    release_notes: "adding notification feature datasource -> repo -> cubit but It's still without ui , UI will be the next step",
+    release_notes: "building the all profile feature and next step will be the notification ui ",
     firebase_cli_token: ENV["FIREBASE_TOKEN"]
   )
   end
