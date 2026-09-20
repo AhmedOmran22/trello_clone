@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/session/session_cubit.dart';
 import '../../../notifications/presentation/screens/notifications_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../search/presentation/screens/search_screen.dart';
@@ -27,8 +25,6 @@ class _NavbarScreenState extends State<NavbarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<SessionCubit>().state.user;
-
     return PopScope(
       canPop: _currentIndex == 0,
       onPopInvokedWithResult: (didPop, result) {
@@ -41,17 +37,11 @@ class _NavbarScreenState extends State<NavbarScreen> {
         ),
         body: IndexedStack(
           index: _currentIndex,
-          children: [
-            const WorkspaceScreen(),
-            const SearchScreen(),
-            const NotificationsScreen(),
-            if (user != null)
-              ProfileScreen(
-                user: user,
-                onLogout: () => context.read<SessionCubit>().logout(),
-              )
-            else
-              const SizedBox.shrink(),
+          children: const [
+            WorkspaceScreen(),
+            SearchScreen(),
+            NotificationsScreen(),
+            ProfileScreen(),
           ],
         ),
         bottomNavigationBar: CustomBottomNavBar(

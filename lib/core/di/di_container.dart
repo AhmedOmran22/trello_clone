@@ -32,6 +32,13 @@ import '../../features/notifications/data/datasource/notification_supabase_data_
 import '../../features/notifications/data/repos/notification_repo_impl.dart';
 import '../../features/notifications/domain/repo/notification_repo.dart';
 import '../../features/notifications/presentation/cubits/notification_cubit.dart';
+import '../../features/profile/data/datasources/profile_remote_datasource.dart';
+import '../../features/profile/data/datasources/profile_supabase_datasource.dart';
+import '../../features/profile/data/repositories/profile_repository_impl.dart';
+import '../../features/profile/domain/repo/profile_repo.dart';
+import '../../features/profile/domain/usecases/update_profile_usecase.dart';
+import '../../features/profile/domain/usecases/upload_avatar_usecase.dart';
+import '../../features/profile/presentation/cubit/profile_cubit.dart';
 import '../../features/workspace/data/data_source/work_space_remote_data_source.dart';
 import '../../features/workspace/data/data_source/workspace_supabase_data_source.dart';
 import '../../features/workspace/data/repo/workspace_repo_impl.dart';
@@ -45,12 +52,19 @@ import '../../features/workspace/domain/use_cases/update_workspace_use_case.dart
 import '../../features/workspace/presentation/cubits/workspace_cubit.dart';
 import '../services/subabase_services.dart';
 import '../session/session_cubit.dart';
+import '../theme/theme_cubit.dart';
 
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
   // ── Core ──
   sl.registerLazySingleton<SupabaseServices>(() => SupabaseServices());
+
+  // ── Theme ──
+  sl.registerLazySingleton(() => ThemeCubit());
+  // Loaded before runApp so the first frame already uses the saved theme
+  // instead of flashing the system one.
+  await sl<ThemeCubit>().loadTheme();
 
   // ── Auth ──
   _initAuth();
@@ -66,6 +80,9 @@ Future<void> initDependencies() async {
 
   // ── Notifications ──
   _initNotifications();
+
+  // ── Profile ──
+  _initProfile();
 }
 
 void _initAuth() {
@@ -185,4 +202,28 @@ void _initNotifications() {
 
   // Cubit
   sl.registerFactory(() => NotificationCubit(repository: sl()));
+}
+
+void _initProfile() {
+  // Datasource
+  sl.registerLazySingleton<ProfileRemoteDatasource>(
+    () => ProfileSupabaseDatasource(sl()),
+  );
+
+  // Repository
+  sl.registerLazySingleton<ProfileRepo>(() => ProfileRepositoryImpl(sl()));
+
+  // Use Cases
+  sl.registerLazySingleton(() => UpdateProfileUseCase(sl()));
+  sl.registerLazySingleton(() => UploadAvatarUseCase(sl()));
+
+  // Cubit — a singleton so profile state survives switching bottom-nav tabs
+  sl.registerLazySingleton(
+    () => ProfileCubit(
+      updateProfileUseCase: sl(),
+      uploadAvatarUseCase: sl(),
+      profileRepo: sl(),
+      sessionCubit: sl(),
+    ),
+  );
 }
