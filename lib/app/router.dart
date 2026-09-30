@@ -14,6 +14,7 @@ import '../features/boards/presentation/cubits/board_cubit.dart';
 import '../features/boards/presentation/screens/board_screen.dart';
 import '../features/navbar/presentation/screens/navbar_screen.dart';
 import '../features/notifications/presentation/cubits/notification_cubit.dart';
+import '../features/search/presentation/cubit/search_cubit.dart';
 import '../features/workspace/presentation/cubits/workspace_cubit.dart';
 import 'splash_screen.dart';
 
@@ -52,6 +53,7 @@ class AppRouter {
               create: (_) => sl<NotificationCubit>()
                 ..startListening(sl<SessionCubit>().state.user!.id),
             ),
+            BlocProvider<SearchCubit>(create: (_) => sl<SearchCubit>()),
           ],
           child: const NavbarScreen(),
         ),
