@@ -8,8 +8,8 @@ platform :android do
     firebase_app_distribution(
     app: "1:817879246720:android:6ae66bd63fc18ec9824365",
     apk_path: "../build/app/outputs/apk/release/app-release.apk",
-    testers: "ahmedomran22.dev@gmail.com,ziadmagdy718@gmail.com",
-    release_notes: "building the all profile feature and next step will be the notification ui ",
+    testers: "mohamedelbakrawy70@gmail.com,ahmedomran22.dev@gmail.com,ziadmagdy718@gmail.com",
+    release_notes: "finishing v1 finally ^^ ",
     firebase_cli_token: ENV["FIREBASE_TOKEN"]
   )
   end
