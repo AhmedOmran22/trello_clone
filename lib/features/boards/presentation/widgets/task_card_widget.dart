@@ -103,7 +103,11 @@ class TaskCardWidget extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        if (task.assigneeName != null) _AssigneeAvatar(name: task.assigneeName!),
+                        if (task.assigneeName != null)
+                          _AssigneeAvatar(
+                            name: task.assigneeName!,
+                            avatarUrl: task.assigneeAvatarUrl,
+                          ),
                       ],
                     ),
                   ],
@@ -169,19 +173,29 @@ class _DueDateBadge extends StatelessWidget {
 }
 
 class _AssigneeAvatar extends StatelessWidget {
-  const _AssigneeAvatar({required this.name});
+  const _AssigneeAvatar({required this.name, this.avatarUrl});
 
   final String name;
+  final String? avatarUrl;
 
   @override
   Widget build(BuildContext context) {
+    final url = avatarUrl;
+
     return CircleAvatar(
       radius: 14,
       backgroundColor: context.colorScheme.primary,
-      child: Text(
-        name.isNotEmpty ? name[0].toUpperCase() : '?',
-        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-      ),
+      backgroundImage: url != null ? NetworkImage(url) : null,
+      child: url == null
+          ? Text(
+              name.isNotEmpty ? name[0].toUpperCase() : '?',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          : null,
     );
   }
 }

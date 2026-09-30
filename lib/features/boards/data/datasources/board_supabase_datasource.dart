@@ -1,6 +1,7 @@
 import '../../../../core/constants/supabase_tables.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/subabase_services.dart';
+import '../../../workspace/data/models/workspace_member_model.dart';
 import '../models/board_column_model.dart';
 import '../models/board_model.dart';
 import '../models/task_model.dart';
@@ -177,6 +178,7 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
     String? priority,
     DateTime? dueDate,
     String? assigneeId,
+    bool clearAssignee = false,
   }) async {
     try {
       final data = <String, dynamic>{
@@ -184,7 +186,9 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
         'description': ?description,
         'priority': ?priority,
         'due_date': ?dueDate?.toIso8601String(),
-        'assignee_id': ?assigneeId,
+        // A plain null assigneeId means "leave as is" (below), so clearing
+        // the column needs its own explicit path.
+        if (clearAssignee) 'assignee_id': null else 'assignee_id': ?assigneeId,
       };
 
       await services.update(SupabaseTables.tasks, taskId, data);
@@ -265,5 +269,23 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
               data.map((json) => TaskModel.fromJson(json)).toList()
                 ..sort((a, b) => a.position.compareTo(b.position)),
         );
+  }
+
+  // ── Workspace Members (for task assignment) ──
+
+  @override
+  Future<List<WorkspaceMemberModel>> getWorkspaceMembers({
+    required String workspaceId,
+  }) async {
+    try {
+      final response = await services.client
+          .from(SupabaseTables.workspaceMembers)
+          .select('id, user_id, role, profiles(full_name, email, avatar_url)')
+          .eq('workspace_id', workspaceId);
+
+      return response.map((json) => WorkspaceMemberModel.fromJson(json)).toList();
+    } on Exception catch (e) {
+      throw mapToAppException(e);
+    }
   }
 }

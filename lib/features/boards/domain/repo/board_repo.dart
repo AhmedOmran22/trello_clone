@@ -1,4 +1,5 @@
 import '../../../../core/utils/result.dart';
+import '../../../workspace/domain/entity/workspace_member_entity.dart';
 import '../entity/board_column_entity.dart';
 import '../entity/board_entity.dart';
 import '../entity/task_entity.dart';
@@ -50,6 +51,7 @@ abstract class BoardRepo {
     String? priority,
     DateTime? dueDate,
     String? assigneeId,
+    bool clearAssignee = false,
   });
 
   Future<Result<void>> moveTask({
@@ -69,4 +71,9 @@ abstract class BoardRepo {
   Stream<List<BoardColumnEntity>> watchColumns({required String boardId});
 
   Stream<List<TaskEntity>> watchTasks({required List<String> columnIds});
+
+  // ── Workspace Members (for task assignment) ──
+  Future<Result<List<WorkspaceMemberEntity>>> getWorkspaceMembers({
+    required String workspaceId,
+  });
 }

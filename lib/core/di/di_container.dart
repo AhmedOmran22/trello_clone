@@ -39,6 +39,12 @@ import '../../features/profile/domain/repo/profile_repo.dart';
 import '../../features/profile/domain/usecases/update_profile_usecase.dart';
 import '../../features/profile/domain/usecases/upload_avatar_usecase.dart';
 import '../../features/profile/presentation/cubit/profile_cubit.dart';
+import '../../features/search/data/datasources/search_remote_datasource.dart';
+import '../../features/search/data/datasources/search_supabase_datasource.dart';
+import '../../features/search/data/repositories/search_repository_impl.dart';
+import '../../features/search/domain/repo/search_repo.dart';
+import '../../features/search/domain/usecases/search_usecase.dart';
+import '../../features/search/presentation/cubit/search_cubit.dart';
 import '../../features/workspace/data/data_source/work_space_remote_data_source.dart';
 import '../../features/workspace/data/data_source/workspace_supabase_data_source.dart';
 import '../../features/workspace/data/repo/workspace_repo_impl.dart';
@@ -83,6 +89,9 @@ Future<void> initDependencies() async {
 
   // ── Profile ──
   _initProfile();
+
+  // ── Search ──
+  _initSearch();
 }
 
 void _initAuth() {
@@ -226,4 +235,20 @@ void _initProfile() {
       sessionCubit: sl(),
     ),
   );
+}
+
+void _initSearch() {
+  // Datasource
+  sl.registerLazySingleton<SearchRemoteDatasource>(
+    () => SearchSupabaseDatasource(sl()),
+  );
+
+  // Repository
+  sl.registerLazySingleton<SearchRepo>(() => SearchRepositoryImpl(sl()));
+
+  // Use Case
+  sl.registerLazySingleton(() => SearchUseCase(sl()));
+
+  // Cubit
+  sl.registerFactory(() => SearchCubit(searchUseCase: sl()));
 }

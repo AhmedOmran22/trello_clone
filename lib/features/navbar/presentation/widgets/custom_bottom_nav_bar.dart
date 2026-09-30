@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/context_extensions.dart';
 import '../../../../core/session/session_cubit.dart';
+import '../../../notifications/presentation/cubits/notification_cubit.dart';
 
 class NavBarItemData {
   final IconData icon;
@@ -63,6 +64,7 @@ class CustomBottomNavBar extends StatelessWidget {
           child: Row(
             children: List.generate(navBarItems.length, (index) {
               final isProfileTab = index == navBarItems.length - 1;
+              final isNotificationsTab = index == 2;
               final isActive = index == currentIndex;
 
               return Expanded(
@@ -72,6 +74,8 @@ class CustomBottomNavBar extends StatelessWidget {
                   label: navBarItems[index].label,
                   child: isProfileTab
                       ? _ProfileNavIcon(isActive: isActive)
+                      : isNotificationsTab
+                      ? _NotificationsNavIcon(item: navBarItems[index], isActive: isActive)
                       : _NavIcon(item: navBarItems[index], isActive: isActive),
                 ),
               );
@@ -150,6 +154,29 @@ class _NavIcon extends StatelessWidget {
           size: 24,
         ),
       ),
+    );
+  }
+}
+
+class _NotificationsNavIcon extends StatelessWidget {
+  final NavBarItemData item;
+  final bool isActive;
+
+  const _NotificationsNavIcon({required this.item, required this.isActive});
+
+  @override
+  Widget build(BuildContext context) {
+    final unreadCount = context.select(
+      (NotificationCubit cubit) => cubit.state.unreadCount,
+    );
+
+    return Badge.count(
+      count: unreadCount,
+      isLabelVisible: unreadCount > 0,
+      maxCount: 99,
+      alignment: AlignmentDirectional.topEnd,
+      offset: const Offset(6, -6),
+      child: _NavIcon(item: item, isActive: isActive),
     );
   }
 }
