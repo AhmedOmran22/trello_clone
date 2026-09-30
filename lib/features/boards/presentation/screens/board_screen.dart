@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/context_extensions.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../workspace/domain/entity/workspace_member_entity.dart';
 import '../../domain/entity/board_column_entity.dart';
 import '../../domain/entity/task_entity.dart';
 import '../bloc/board_bloc.dart';
@@ -39,6 +40,7 @@ class _BoardScreenState extends State<BoardScreen> {
     BoardBloc bloc,
     BoardColumnEntity column,
     List<BoardColumnEntity> allColumns,
+    List<WorkspaceMemberEntity> members,
     TaskEntity task,
   ) {
     showTaskDetailBottomSheet(
@@ -46,6 +48,7 @@ class _BoardScreenState extends State<BoardScreen> {
       task: task,
       columnName: column.name,
       otherColumns: allColumns.where((c) => c.id != column.id).toList(),
+      members: members,
       onDelete: () => bloc.add(TaskDeleted(taskId: task.id, columnId: column.id)),
       onMove: (targetColumnId) {
         final targetColumn = allColumns.firstWhere((c) => c.id == targetColumnId);
@@ -58,24 +61,40 @@ class _BoardScreenState extends State<BoardScreen> {
           ),
         );
       },
+      onAssigneeChanged: (userId) => bloc.add(
+        TaskUpdated(
+          taskId: task.id,
+          assigneeId: userId,
+          clearAssignee: userId == null,
+        ),
+      ),
     );
   }
 
   void _openAddColumnSheet(BoardBloc bloc) {
-    showAddColumnBottomSheet(context, onSubmit: (name) => bloc.add(ColumnCreated(name)));
+    showAddColumnBottomSheet(
+      context,
+      onSubmit: (name) => bloc.add(ColumnCreated(name)),
+    );
   }
 
-  void _openAddTaskSheet(BoardBloc bloc, BoardColumnEntity column) {
+  void _openAddTaskSheet(
+    BoardBloc bloc,
+    BoardColumnEntity column,
+    List<WorkspaceMemberEntity> members,
+  ) {
     showAddTaskBottomSheet(
       context,
       columnName: column.name,
-      onSubmit: (title, description, priority, dueDate) => bloc.add(
+      members: members,
+      onSubmit: (title, description, priority, dueDate, assigneeId) => bloc.add(
         TaskCreated(
           columnId: column.id,
           title: title,
           description: description,
           priority: priority,
           dueDate: dueDate,
+          assigneeId: assigneeId,
         ),
       ),
     );
@@ -85,7 +104,8 @@ class _BoardScreenState extends State<BoardScreen> {
     showRenameColumnBottomSheet(
       context,
       currentName: column.name,
-      onSave: (newName) => bloc.add(ColumnRenamed(columnId: column.id, name: newName)),
+      onSave: (newName) =>
+          bloc.add(ColumnRenamed(columnId: column.id, name: newName)),
     );
   }
 
@@ -149,7 +169,10 @@ class _BoardScreenState extends State<BoardScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.delete_outline, color: AppColors.error),
-              title: const Text('Delete Column', style: TextStyle(color: AppColors.error)),
+              title: const Text(
+                'Delete Column',
+                style: TextStyle(color: AppColors.error),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _confirmDeleteColumn(bloc, column);
@@ -198,15 +221,22 @@ class _BoardScreenState extends State<BoardScreen> {
           },
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.more_vert), onPressed: _openBoardOptionsSheet),
-          IconButton(icon: const Icon(Icons.add), onPressed: () => _openAddColumnSheet(bloc)),
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: _openBoardOptionsSheet,
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => _openAddColumnSheet(bloc),
+          ),
         ],
       ),
       body: BlocListener<BoardBloc, BoardState>(
         listenWhen: (previous, current) =>
             current is BoardLoaded &&
             current.actionError != null &&
-            !(previous is BoardLoaded && previous.actionError == current.actionError),
+            !(previous is BoardLoaded &&
+                previous.actionError == current.actionError),
         listener: (context, state) {
           context.showErrorSnackBar((state as BoardLoaded).actionError!);
         },
@@ -228,7 +258,8 @@ class _BoardScreenState extends State<BoardScreen> {
                       Text(state.message, textAlign: TextAlign.center),
                       const SizedBox(height: AppTheme.spacingMd),
                       ElevatedButton(
-                        onPressed: () => bloc.add(BoardLoadRequested(widget.boardId)),
+                        onPressed: () =>
+                            bloc.add(BoardLoadRequested(widget.boardId)),
                         child: const Text('Retry'),
                       ),
                     ],
@@ -248,7 +279,10 @@ class _BoardScreenState extends State<BoardScreen> {
                 if (!_horizontalController.hasClients) return false;
                 final position = _horizontalController.position;
                 final page = (position.pixels / itemExtent).round();
-                final target = (page * itemExtent).clamp(0.0, position.maxScrollExtent);
+                final target = (page * itemExtent).clamp(
+                  0.0,
+                  position.maxScrollExtent,
+                );
                 if ((target - position.pixels).abs() > 1) {
                   _horizontalController.animateTo(
                     target,
@@ -271,7 +305,13 @@ class _BoardScreenState extends State<BoardScreen> {
                         child: BoardColumnWidget(
                           column: column,
                           columnWidth: columnWidth,
-                          onTaskTap: (task) => _openTaskDetail(bloc, column, columns, task),
+                          onTaskTap: (task) => _openTaskDetail(
+                            bloc,
+                            column,
+                            columns,
+                            state.members,
+                            task,
+                          ),
                           onDropTask: (data, index) => bloc.add(
                             TaskMoved(
                               taskId: data.task.id,
@@ -280,16 +320,21 @@ class _BoardScreenState extends State<BoardScreen> {
                               newPosition: index,
                             ),
                           ),
-                          onAddCard: () => _openAddTaskSheet(bloc, column),
-                          onMoreOptions: () => _openColumnOptions(bloc, column, columns),
-                          onReorderColumns: () => _openReorderColumnsSheet(bloc, columns),
+                          onAddCard: () =>
+                              _openAddTaskSheet(bloc, column, state.members),
+                          onMoreOptions: () =>
+                              _openColumnOptions(bloc, column, columns),
+                          onReorderColumns: () =>
+                              _openReorderColumnsSheet(bloc, columns),
                         ),
                       ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: gap),
                       child: SizedBox(
                         width: columnWidth,
-                        child: _AddColumnCard(onTap: () => _openAddColumnSheet(bloc)),
+                        child: _AddColumnCard(
+                          onTap: () => _openAddColumnSheet(bloc),
+                        ),
                       ),
                     ),
                   ],

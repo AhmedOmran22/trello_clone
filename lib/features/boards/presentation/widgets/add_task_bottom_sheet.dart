@@ -3,27 +3,44 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/context_extensions.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../workspace/domain/entity/workspace_member_entity.dart';
 import '../utils/date_formatter.dart';
+import 'member_selector_widget.dart';
 
 Future<void> showAddTaskBottomSheet(
   BuildContext context, {
   required String columnName,
-  void Function(String title, String? description, String priority, DateTime? dueDate)?
-      onSubmit,
+  required List<WorkspaceMemberEntity> members,
+  void Function(
+    String title,
+    String? description,
+    String priority,
+    DateTime? dueDate,
+    String? assigneeId,
+  )?
+  onSubmit,
 }) {
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    builder: (context) => _AddTaskBottomSheet(columnName: columnName, onSubmit: onSubmit),
+    builder: (context) =>
+        _AddTaskBottomSheet(columnName: columnName, members: members, onSubmit: onSubmit),
   );
 }
 
 class _AddTaskBottomSheet extends StatefulWidget {
-  const _AddTaskBottomSheet({required this.columnName, this.onSubmit});
+  const _AddTaskBottomSheet({required this.columnName, required this.members, this.onSubmit});
 
   final String columnName;
-  final void Function(String title, String? description, String priority, DateTime? dueDate)?
-      onSubmit;
+  final List<WorkspaceMemberEntity> members;
+  final void Function(
+    String title,
+    String? description,
+    String priority,
+    DateTime? dueDate,
+    String? assigneeId,
+  )?
+  onSubmit;
 
   @override
   State<_AddTaskBottomSheet> createState() => _AddTaskBottomSheetState();
@@ -34,6 +51,7 @@ class _AddTaskBottomSheetState extends State<_AddTaskBottomSheet> {
   final _descriptionController = TextEditingController();
   String _priority = 'medium';
   DateTime? _dueDate;
+  String? _assigneeId;
 
   static const _priorities = ['low', 'medium', 'high', 'urgent'];
 
@@ -80,6 +98,7 @@ class _AddTaskBottomSheetState extends State<_AddTaskBottomSheet> {
       description.isEmpty ? null : description,
       _priority,
       _dueDate,
+      _assigneeId,
     );
     Navigator.pop(context);
   }
@@ -150,6 +169,14 @@ class _AddTaskBottomSheetState extends State<_AddTaskBottomSheet> {
                     side: BorderSide.none,
                   );
                 }).toList(),
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+              Text('Assignee', style: context.textTheme.bodyMedium),
+              const SizedBox(height: AppTheme.spacingSm),
+              MemberSelectorWidget(
+                members: widget.members,
+                selectedUserId: _assigneeId,
+                onSelected: (userId) => setState(() => _assigneeId = userId),
               ),
               const SizedBox(height: AppTheme.spacingMd),
               InkWell(

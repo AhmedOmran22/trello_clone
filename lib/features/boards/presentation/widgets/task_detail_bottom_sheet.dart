@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/context_extensions.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../workspace/domain/entity/workspace_member_entity.dart';
 import '../../domain/entity/board_column_entity.dart';
 import '../../domain/entity/task_entity.dart';
 import '../utils/date_formatter.dart';
+import 'member_selector_widget.dart';
 import 'move_task_bottom_sheet.dart';
 
 Future<void> showTaskDetailBottomSheet(
@@ -13,8 +15,10 @@ Future<void> showTaskDetailBottomSheet(
   required TaskEntity task,
   required String columnName,
   required List<BoardColumnEntity> otherColumns,
+  required List<WorkspaceMemberEntity> members,
   VoidCallback? onDelete,
   void Function(String targetColumnId)? onMove,
+  void Function(String? userId)? onAssigneeChanged,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -23,26 +27,41 @@ Future<void> showTaskDetailBottomSheet(
       task: task,
       columnName: columnName,
       otherColumns: otherColumns,
+      members: members,
       onDelete: onDelete,
       onMove: onMove,
+      onAssigneeChanged: onAssigneeChanged,
     ),
   );
 }
 
-class _TaskDetailBottomSheet extends StatelessWidget {
+class _TaskDetailBottomSheet extends StatefulWidget {
   const _TaskDetailBottomSheet({
     required this.task,
     required this.columnName,
     required this.otherColumns,
+    required this.members,
     this.onDelete,
     this.onMove,
+    this.onAssigneeChanged,
   });
 
   final TaskEntity task;
   final String columnName;
   final List<BoardColumnEntity> otherColumns;
+  final List<WorkspaceMemberEntity> members;
   final VoidCallback? onDelete;
   final void Function(String targetColumnId)? onMove;
+  final void Function(String? userId)? onAssigneeChanged;
+
+  @override
+  State<_TaskDetailBottomSheet> createState() => _TaskDetailBottomSheetState();
+}
+
+class _TaskDetailBottomSheetState extends State<_TaskDetailBottomSheet> {
+  // Mirrors widget.task.assigneeId, updated immediately on selection so the
+  // sheet reflects the change without waiting for the Bloc round-trip.
+  late String? _assigneeId = widget.task.assigneeId;
 
   Color _priorityColor(String priority) {
     switch (priority) {
@@ -61,6 +80,8 @@ class _TaskDetailBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenHeight = context.screenHeight;
+
+    final task = widget.task;
 
     return SizedBox(
       height: screenHeight * 0.85,
@@ -88,7 +109,7 @@ class _TaskDetailBottomSheet extends StatelessWidget {
                   Text(task.title, style: context.textTheme.headlineMedium),
                   const SizedBox(height: 4),
                   Text(
-                    'in $columnName',
+                    'in ${widget.columnName}',
                     style: context.textTheme.bodyMedium?.copyWith(
                       color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
@@ -128,28 +149,14 @@ class _TaskDetailBottomSheet extends StatelessWidget {
                   _DetailSection(
                     icon: Icons.person_outline,
                     label: 'Assignee',
-                    child: task.assigneeName != null
-                        ? Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircleAvatar(
-                                radius: 12,
-                                backgroundColor: context.colorScheme.primary,
-                                child: Text(
-                                  task.assigneeName![0].toUpperCase(),
-                                  style: const TextStyle(color: Colors.white, fontSize: 11),
-                                ),
-                              ),
-                              const SizedBox(width: AppTheme.spacingSm),
-                              Text(task.assigneeName!, style: context.textTheme.bodyMedium),
-                            ],
-                          )
-                        : Text(
-                            'Unassigned',
-                            style: context.textTheme.bodyMedium?.copyWith(
-                              color: context.colorScheme.onSurface.withValues(alpha: 0.5),
-                            ),
-                          ),
+                    child: MemberSelectorWidget(
+                      members: widget.members,
+                      selectedUserId: _assigneeId,
+                      onSelected: (userId) {
+                        setState(() => _assigneeId = userId);
+                        widget.onAssigneeChanged?.call(userId);
+                      },
+                    ),
                   ),
                   _DetailSection(
                     icon: Icons.flag_outlined,
@@ -186,8 +193,8 @@ class _TaskDetailBottomSheet extends StatelessWidget {
                       showMoveTaskBottomSheet(
                         context,
                         task: task,
-                        otherColumns: otherColumns,
-                        onMove: onMove,
+                        otherColumns: widget.otherColumns,
+                        onMove: widget.onMove,
                       );
                     },
                     icon: const Icon(Icons.drive_file_move_outline),
@@ -198,7 +205,7 @@ class _TaskDetailBottomSheet extends StatelessWidget {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    onDelete?.call();
+                    widget.onDelete?.call();
                   },
                   style: TextButton.styleFrom(foregroundColor: AppColors.error),
                   child: const Text('Delete'),

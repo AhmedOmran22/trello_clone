@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../../workspace/domain/entity/workspace_member_entity.dart';
 import '../../domain/entity/board_column_entity.dart';
 import '../../domain/entity/task_entity.dart';
 import '../../domain/repo/board_repo.dart';
@@ -18,6 +19,7 @@ import '../../domain/usecases/reorder_tasks_usecase.dart';
 import '../../domain/usecases/update_task_usecase.dart';
 import 'board_event.dart';
 import 'board_state.dart';
+
 class BoardBloc extends Bloc<BoardEvent, BoardState> {
   final String boardId;
   final BoardRepo boardRepo;
@@ -72,10 +74,11 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
   BoardLoaded? get _loaded => state is BoardLoaded ? state as BoardLoaded : null;
 
   List<BoardColumnEntity> _mergedColumns() {
-    final merged = _columnsMeta
-        .map((c) => c.copyWith(tasks: _tasksByColumn[c.id] ?? const []))
-        .toList()
-      ..sort((a, b) => a.position.compareTo(b.position));
+    final merged =
+        _columnsMeta
+            .map((c) => c.copyWith(tasks: _tasksByColumn[c.id] ?? const []))
+            .toList()
+          ..sort((a, b) => a.position.compareTo(b.position));
     return merged;
   }
 
@@ -98,24 +101,49 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
 
     await result.when(
       success: (board) async {
-        _columnsMeta = board.columns.map((c) => c.copyWith(tasks: const [])).toList();
+        _columnsMeta = board.columns
+            .map((c) => c.copyWith(tasks: const []))
+            .toList();
         _tasksByColumn = {for (final c in board.columns) c.id: c.tasks};
 
+        // Failing to fetch members shouldn't block showing the board — the
+        // assignee picker just falls back to an empty member list.
+        final membersResult = await boardRepo.getWorkspaceMembers(
+          workspaceId: board.workspaceId,
+        );
+        final members = membersResult.when(
+          success: (members) => members,
+          error: (_) => const <WorkspaceMemberEntity>[],
+        );
+
         emit(
-          BoardLoaded(boardId: board.id, boardName: board.name, columns: _mergedColumns()),
+          BoardLoaded(
+            boardId: board.id,
+            boardName: board.name,
+            workspaceId: board.workspaceId,
+            columns: _mergedColumns(),
+            members: members,
+          ),
         );
 
         await _subscribeToColumns(board.id);
       },
       error: (failure) async {
-        emit(BoardError(message: failure.message, isNetworkError: failure is NetworkFailure));
+        emit(
+          BoardError(
+            message: failure.message,
+            isNetworkError: failure is NetworkFailure,
+          ),
+        );
       },
     );
   }
 
   Future<void> _subscribeToColumns(String boardId) async {
     await _columnsSubscription?.cancel();
-    _columnsSubscription = boardRepo.watchColumns(boardId: boardId).listen((columns) {
+    _columnsSubscription = boardRepo.watchColumns(boardId: boardId).listen((
+      columns,
+    ) {
       if (isClosed) return;
       add(RealtimeColumnsUpdated(columns));
     });
@@ -174,7 +202,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
 
   // ── Columns ──
 
-  Future<void> _onColumnCreated(ColumnCreated event, Emitter<BoardState> emit) async {
+  Future<void> _onColumnCreated(
+    ColumnCreated event,
+    Emitter<BoardState> emit,
+  ) async {
     final loaded = _loaded;
     if (loaded == null) return;
 
@@ -201,7 +232,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     String? errorMessage;
     result.when(
       success: (column) {
-        _columnsMeta = [for (final c in _columnsMeta) if (c.id == tempId) column else c];
+        _columnsMeta = [
+          for (final c in _columnsMeta)
+            if (c.id == tempId) column else c,
+        ];
       },
       error: (failure) {
         _columnsMeta = previous;
@@ -211,7 +245,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     _emitMerged(emit, actionError: errorMessage);
   }
 
-  Future<void> _onColumnRenamed(ColumnRenamed event, Emitter<BoardState> emit) async {
+  Future<void> _onColumnRenamed(
+    ColumnRenamed event,
+    Emitter<BoardState> emit,
+  ) async {
     if (_loaded == null) return;
 
     final previous = List<BoardColumnEntity>.from(_columnsMeta);
@@ -221,11 +258,17 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     ];
     _emitMerged(emit);
 
-    final result = await renameColumnUseCase(columnId: event.columnId, name: event.name);
+    final result = await renameColumnUseCase(
+      columnId: event.columnId,
+      name: event.name,
+    );
 
     result.when(
       success: (column) {
-        _columnsMeta = [for (final c in _columnsMeta) if (c.id == column.id) column else c];
+        _columnsMeta = [
+          for (final c in _columnsMeta)
+            if (c.id == column.id) column else c,
+        ];
       },
       error: (_) {
         _columnsMeta = previous;
@@ -234,7 +277,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     _emitMerged(emit);
   }
 
-  Future<void> _onColumnsReordered(ColumnsReordered event, Emitter<BoardState> emit) async {
+  Future<void> _onColumnsReordered(
+    ColumnsReordered event,
+    Emitter<BoardState> emit,
+  ) async {
     if (_loaded == null) return;
 
     final previous = List<BoardColumnEntity>.from(_columnsMeta);
@@ -256,7 +302,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     );
   }
 
-  Future<void> _onColumnDeleted(ColumnDeleted event, Emitter<BoardState> emit) async {
+  Future<void> _onColumnDeleted(
+    ColumnDeleted event,
+    Emitter<BoardState> emit,
+  ) async {
     if (_loaded == null) return;
 
     final previousColumns = List<BoardColumnEntity>.from(_columnsMeta);
@@ -297,7 +346,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
       assigneeId: event.assigneeId,
       createdAt: DateTime.now(),
     );
-    _tasksByColumn = {..._tasksByColumn, event.columnId: [...existing, optimisticTask]};
+    _tasksByColumn = {
+      ..._tasksByColumn,
+      event.columnId: [...existing, optimisticTask],
+    };
     _emitMerged(emit);
 
     final result = await createTaskUseCase(
@@ -316,7 +368,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
         final tasks = _tasksByColumn[event.columnId] ?? const [];
         _tasksByColumn = {
           ..._tasksByColumn,
-          event.columnId: [for (final t in tasks) if (t.id == tempId) task else t],
+          event.columnId: [
+            for (final t in tasks)
+              if (t.id == tempId) task else t,
+          ],
         };
       },
       error: (failure) {
@@ -325,6 +380,31 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
       },
     );
     _emitMerged(emit, actionError: errorMessage);
+  }
+
+  /// [TaskEntity.copyWith] treats a `null` argument as "keep the existing
+  /// value" (true for every field), so it can't express "clear the
+  /// assignee" the way [TaskUpdated.clearAssignee] needs to.
+  TaskEntity _applyTaskUpdate(TaskEntity task, TaskUpdated event) {
+    final updated = task.copyWith(
+      title: event.title?.trim(),
+      description: event.description,
+      priority: event.priority,
+      dueDate: event.dueDate,
+      assigneeId: event.assigneeId,
+    );
+    if (!event.clearAssignee) return updated;
+
+    return TaskEntity(
+      id: updated.id,
+      columnId: updated.columnId,
+      title: updated.title,
+      description: updated.description,
+      priority: updated.priority,
+      position: updated.position,
+      dueDate: updated.dueDate,
+      createdAt: updated.createdAt,
+    );
   }
 
   Future<void> _onTaskUpdated(TaskUpdated event, Emitter<BoardState> emit) async {
@@ -343,16 +423,7 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
       ..._tasksByColumn,
       ownerColumnId: [
         for (final t in _tasksByColumn[ownerColumnId]!)
-          if (t.id == event.taskId)
-            t.copyWith(
-              title: event.title?.trim(),
-              description: event.description,
-              priority: event.priority,
-              dueDate: event.dueDate,
-              assigneeId: event.assigneeId,
-            )
-          else
-            t,
+          if (t.id == event.taskId) _applyTaskUpdate(t, event) else t,
       ],
     };
     _emitMerged(emit);
@@ -364,6 +435,7 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
       priority: event.priority,
       dueDate: event.dueDate,
       assigneeId: event.assigneeId,
+      clearAssignee: event.clearAssignee,
     );
 
     result.when(
@@ -388,7 +460,9 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
 
     final previous = Map<String, List<TaskEntity>>.from(_tasksByColumn);
 
-    final sourceTasks = List<TaskEntity>.from(_tasksByColumn[event.fromColumnId] ?? const []);
+    final sourceTasks = List<TaskEntity>.from(
+      _tasksByColumn[event.fromColumnId] ?? const [],
+    );
     final movingIndex = sourceTasks.indexWhere((t) => t.id == event.taskId);
     if (movingIndex == -1) return;
     final movingTask = sourceTasks.removeAt(movingIndex);
@@ -399,14 +473,20 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
         : List<TaskEntity>.from(_tasksByColumn[event.targetColumnId] ?? const []);
 
     final insertIndex = event.newPosition.clamp(0, destTasks.length);
-    destTasks.insert(insertIndex, movingTask.copyWith(columnId: event.targetColumnId));
+    destTasks.insert(
+      insertIndex,
+      movingTask.copyWith(columnId: event.targetColumnId),
+    );
 
     final reindexedDest = [
       for (var i = 0; i < destTasks.length; i++) destTasks[i].copyWith(position: i),
     ];
     final reindexedSource = sameColumn
         ? reindexedDest
-        : [for (var i = 0; i < sourceTasks.length; i++) sourceTasks[i].copyWith(position: i)];
+        : [
+            for (var i = 0; i < sourceTasks.length; i++)
+              sourceTasks[i].copyWith(position: i),
+          ];
 
     final updatedTasks = Map<String, List<TaskEntity>>.from(_tasksByColumn);
     if (sameColumn) {
@@ -432,22 +512,32 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     }
 
     if (!sameColumn) {
-      await reorderTasksUseCase(columnId: event.fromColumnId, tasks: reindexedSource);
+      await reorderTasksUseCase(
+        columnId: event.fromColumnId,
+        tasks: reindexedSource,
+      );
     }
     await reorderTasksUseCase(columnId: event.targetColumnId, tasks: reindexedDest);
   }
 
-  Future<void> _onTasksReordered(TasksReordered event, Emitter<BoardState> emit) async {
+  Future<void> _onTasksReordered(
+    TasksReordered event,
+    Emitter<BoardState> emit,
+  ) async {
     if (_loaded == null) return;
 
     final previous = Map<String, List<TaskEntity>>.from(_tasksByColumn);
     final reindexed = [
-      for (var i = 0; i < event.tasks.length; i++) event.tasks[i].copyWith(position: i),
+      for (var i = 0; i < event.tasks.length; i++)
+        event.tasks[i].copyWith(position: i),
     ];
     _tasksByColumn = {..._tasksByColumn, event.columnId: reindexed};
     _emitMerged(emit);
 
-    final result = await reorderTasksUseCase(columnId: event.columnId, tasks: event.tasks);
+    final result = await reorderTasksUseCase(
+      columnId: event.columnId,
+      tasks: event.tasks,
+    );
 
     result.when(
       success: (_) {},

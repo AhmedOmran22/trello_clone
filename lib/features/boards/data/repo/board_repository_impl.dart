@@ -1,5 +1,6 @@
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/result.dart';
+import '../../../workspace/domain/entity/workspace_member_entity.dart';
 import '../../domain/entity/board_column_entity.dart';
 import '../../domain/entity/board_entity.dart';
 import '../../domain/entity/task_entity.dart';
@@ -150,6 +151,7 @@ class BoardRepositoryImpl implements BoardRepo {
     String? priority,
     DateTime? dueDate,
     String? assigneeId,
+    bool clearAssignee = false,
   }) async {
     try {
       final model = await datasource.updateTask(
@@ -159,6 +161,7 @@ class BoardRepositoryImpl implements BoardRepo {
         priority: priority,
         dueDate: dueDate,
         assigneeId: assigneeId,
+        clearAssignee: clearAssignee,
       );
       return Result.success(model.toEntity());
     } on Exception catch (e) {
@@ -223,5 +226,19 @@ class BoardRepositoryImpl implements BoardRepo {
     return datasource
         .watchTasks(columnIds: columnIds)
         .map((models) => models.map((m) => m.toEntity()).toList());
+  }
+
+  // ── Workspace Members (for task assignment) ──
+
+  @override
+  Future<Result<List<WorkspaceMemberEntity>>> getWorkspaceMembers({
+    required String workspaceId,
+  }) async {
+    try {
+      final models = await datasource.getWorkspaceMembers(workspaceId: workspaceId);
+      return Result.success(models.map((m) => m.toEntity()).toList());
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
+    }
   }
 }

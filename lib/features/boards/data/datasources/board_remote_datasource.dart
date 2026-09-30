@@ -1,3 +1,4 @@
+import '../../../workspace/data/models/workspace_member_model.dart';
 import '../models/board_column_model.dart';
 import '../models/board_model.dart';
 import '../models/task_model.dart';
@@ -43,6 +44,7 @@ abstract class BoardRemoteDatasource {
     String? priority,
     DateTime? dueDate,
     String? assigneeId,
+    bool clearAssignee = false,
   });
 
   Future<void> moveTask({
@@ -59,4 +61,7 @@ abstract class BoardRemoteDatasource {
   Stream<List<BoardColumnModel>> watchColumns({required String boardId});
 
   Stream<List<TaskModel>> watchTasks({required List<String> columnIds});
+
+  // ── Workspace Members (for task assignment) ──
+  Future<List<WorkspaceMemberModel>> getWorkspaceMembers({required String workspaceId});
 }

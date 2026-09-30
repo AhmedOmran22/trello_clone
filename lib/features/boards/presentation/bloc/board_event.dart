@@ -91,6 +91,11 @@ class TaskUpdated extends BoardEvent {
   final DateTime? dueDate;
   final String? assigneeId;
 
+  /// A plain `assigneeId: null` means "leave the assignee as is" (every
+  /// other field here follows that same "null = unchanged" rule). Set this
+  /// to explicitly unassign the task instead.
+  final bool clearAssignee;
+
   const TaskUpdated({
     required this.taskId,
     this.title,
@@ -98,10 +103,19 @@ class TaskUpdated extends BoardEvent {
     this.priority,
     this.dueDate,
     this.assigneeId,
+    this.clearAssignee = false,
   });
 
   @override
-  List<Object?> get props => [taskId, title, description, priority, dueDate, assigneeId];
+  List<Object?> get props => [
+    taskId,
+    title,
+    description,
+    priority,
+    dueDate,
+    assigneeId,
+    clearAssignee,
+  ];
 }
 
 class TaskMoved extends BoardEvent {

@@ -17,6 +17,7 @@ class UpdateTaskUseCase {
     String? priority,
     DateTime? dueDate,
     String? assigneeId,
+    bool clearAssignee = false,
   }) async {
     var trimmedTitle = title;
     if (title != null) {
@@ -43,6 +44,7 @@ class UpdateTaskUseCase {
       priority: priority,
       dueDate: dueDate,
       assigneeId: assigneeId,
+      clearAssignee: clearAssignee,
     );
   }
 }
