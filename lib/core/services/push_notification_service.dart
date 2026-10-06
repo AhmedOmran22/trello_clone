@@ -7,6 +7,15 @@ import '../constants/supabase_tables.dart';
 /// up the message handlers. The Supabase edge function / DB webhook that
 /// actually sends the push is set up outside this app.
 ///
+/// [initialize] is called from [SessionCubit]'s "authenticated" transition,
+/// which fires both on a fresh login and on a restored session at cold
+/// start — and, on a shared device, can fire more than once per process if
+/// a different user logs in after the previous one logs out. Only the
+/// permission request and the message/token listeners are one-time setup;
+/// fetching the current token and attributing it to whoever is signed in
+/// right now runs on every call, so a user switch on the same install still
+/// ends up with the right row in `fcm_tokens`.
+///
 /// Token save/delete failures are swallowed on purpose — push is a
 /// nice-to-have on top of the in-app notification list, not something that
 /// should block login or logout if it hiccups.
@@ -16,15 +25,9 @@ class PushNotificationService {
   PushNotificationService._();
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  bool _initialized = false;
+  bool _listenersRegistered = false;
 
   Future<void> initialize() async {
-    if (_initialized) return;
-    // Set eagerly, not after the awaits below — a second call that arrives
-    // while the first is still mid-flight (e.g. a quick logout+login) must
-    // not register the onMessage/onMessageOpenedApp listeners twice.
-    _initialized = true;
-
     final settings = await _messaging.requestPermission(
       alert: true,
       badge: true,
@@ -40,6 +43,9 @@ class PushNotificationService {
     if (token != null) {
       await _saveToken(token);
     }
+
+    if (_listenersRegistered) return;
+    _listenersRegistered = true;
 
     _messaging.onTokenRefresh.listen(_saveToken);
 
@@ -73,11 +79,11 @@ class PushNotificationService {
   }
 
   void _handleMessageTap(RemoteMessage message) {
-    // message.data carries 'type' / 'task_id' / 'workspace_id'.
-    // : navigate based on type, once there's a global navigator/router
-    // handle to do it from here:
-    // - task_assigned / task_moved → open the board screen for task_id
-    // - member_added → open the workspace screen for workspace_id
+    // message.data carries 'type' / 'task_id' / 'workspace_id'. Still
+    // unwired: navigating based on type needs a global navigator/router
+    // handle, e.g.:
+    // - task_assigned / task_moved -> open the board screen for task_id
+    // - member_added -> open the workspace screen for workspace_id
     // For now this just leaves the app open on whatever screen it was on.
   }
 
