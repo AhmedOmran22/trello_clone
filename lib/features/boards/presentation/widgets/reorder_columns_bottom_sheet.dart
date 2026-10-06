@@ -12,7 +12,8 @@ Future<void> showReorderColumnsBottomSheet(
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    builder: (context) => _ReorderColumnsBottomSheet(columns: columns, onSave: onSave),
+    builder: (context) =>
+        _ReorderColumnsBottomSheet(columns: columns, onSave: onSave),
   );
 }
 
@@ -23,7 +24,8 @@ class _ReorderColumnsBottomSheet extends StatefulWidget {
   final void Function(List<BoardColumnEntity> newOrder)? onSave;
 
   @override
-  State<_ReorderColumnsBottomSheet> createState() => _ReorderColumnsBottomSheetState();
+  State<_ReorderColumnsBottomSheet> createState() =>
+      _ReorderColumnsBottomSheetState();
 }
 
 class _ReorderColumnsBottomSheetState extends State<_ReorderColumnsBottomSheet> {
@@ -70,7 +72,7 @@ class _ReorderColumnsBottomSheetState extends State<_ReorderColumnsBottomSheet> 
               child: ReorderableListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
                 itemCount: _columns.length,
-                onReorder: _onReorder,
+                onReorderItem: _onReorder,
                 itemBuilder: (context, index) {
                   final column = _columns[index];
                   return ListTile(

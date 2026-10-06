@@ -7,4 +7,5 @@ class SupabaseTables {
   static const String boardColumns = 'board_columns';
   static const String tasks = 'tasks';
   static const String notifications = 'notifications';
+  static const String fcmTokens = 'fcm_tokens';
 }

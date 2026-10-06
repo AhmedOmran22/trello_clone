@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/domain/entity/user_entity.dart';
 import '../../features/auth/domain/use_case/get_current_user_use_case.dart';
 import '../../features/auth/domain/use_case/logout_use_case.dart';
+import '../services/push_notification_service.dart';
 import 'session_state.dart';
 
 class SessionCubit extends Cubit<SessionState> {
@@ -32,6 +33,10 @@ class SessionCubit extends Cubit<SessionState> {
 
   /// Called from profile screen or anywhere logout is triggered
   Future<void> logout() async {
+    // Must happen before logoutUseCase() — removing the token needs the
+    // still-active session to identify which row is this device's.
+    await PushNotificationService().removeToken();
+
     final result = await logoutUseCase();
 
     result.when(
