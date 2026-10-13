@@ -14,6 +14,8 @@ abstract class WorkspaceRepo {
 
   Future<Result<void>> deleteWorkspace({required String id});
 
+  Future<Result<List<WorkspaceMemberEntity>>> getMembers({required String workspaceId});
+
   Future<Result<WorkspaceMemberEntity>> addMember({
     required String workspaceId,
     required String email,

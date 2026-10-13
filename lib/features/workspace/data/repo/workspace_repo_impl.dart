@@ -58,6 +58,18 @@ class WorkspaceRepositoryImpl implements WorkspaceRepo {
   }
 
   @override
+  Future<Result<List<WorkspaceMemberEntity>>> getMembers({
+    required String workspaceId,
+  }) async {
+    try {
+      final models = await datasource.getMembers(workspaceId: workspaceId);
+      return Result.success(models.map((m) => m.toEntity()).toList());
+    } on Exception catch (e) {
+      return Result.error(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
   Future<Result<WorkspaceMemberEntity>> addMember({
     required String workspaceId,
     required String email,

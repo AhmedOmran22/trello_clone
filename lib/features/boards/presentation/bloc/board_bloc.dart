@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../../../workspace/domain/entity/workspace_member_entity.dart';
+import '../../../workspace/domain/use_cases/get_workspace_members_use_case.dart';
 import '../../domain/entity/board_column_entity.dart';
 import '../../domain/entity/task_entity.dart';
-import '../../domain/repo/board_repo.dart';
 import '../../domain/usecases/create_column_usecase.dart';
 import '../../domain/usecases/create_task_usecase.dart';
 import '../../domain/usecases/delete_column_usecase.dart';
@@ -17,12 +17,13 @@ import '../../domain/usecases/rename_column_usecase.dart';
 import '../../domain/usecases/reorder_columns_usecase.dart';
 import '../../domain/usecases/reorder_tasks_usecase.dart';
 import '../../domain/usecases/update_task_usecase.dart';
+import '../../domain/usecases/watch_columns_usecase.dart';
+import '../../domain/usecases/watch_tasks_usecase.dart';
 import 'board_event.dart';
 import 'board_state.dart';
 
 class BoardBloc extends Bloc<BoardEvent, BoardState> {
   final String boardId;
-  final BoardRepo boardRepo;
   final GetBoardUseCase getBoardUseCase;
   final CreateColumnUseCase createColumnUseCase;
   final RenameColumnUseCase renameColumnUseCase;
@@ -33,6 +34,9 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
   final MoveTaskUseCase moveTaskUseCase;
   final ReorderTasksUseCase reorderTasksUseCase;
   final DeleteTaskUseCase deleteTaskUseCase;
+  final GetWorkspaceMembersUseCase getWorkspaceMembersUseCase;
+  final WatchColumnsUseCase watchColumnsUseCase;
+  final WatchTasksUseCase watchTasksUseCase;
 
   StreamSubscription<List<BoardColumnEntity>>? _columnsSubscription;
   StreamSubscription<List<TaskEntity>>? _tasksSubscription;
@@ -43,7 +47,6 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
 
   BoardBloc({
     required this.boardId,
-    required this.boardRepo,
     required this.getBoardUseCase,
     required this.createColumnUseCase,
     required this.renameColumnUseCase,
@@ -54,6 +57,9 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     required this.moveTaskUseCase,
     required this.reorderTasksUseCase,
     required this.deleteTaskUseCase,
+    required this.getWorkspaceMembersUseCase,
+    required this.watchColumnsUseCase,
+    required this.watchTasksUseCase,
   }) : super(const BoardInitial()) {
     on<BoardLoadRequested>(_onBoardLoadRequested);
     on<ColumnCreated>(_onColumnCreated);
@@ -71,7 +77,8 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     add(BoardLoadRequested(boardId));
   }
 
-  BoardLoaded? get _loaded => state is BoardLoaded ? state as BoardLoaded : null;
+  BoardLoaded? get _loaded =>
+      state is BoardLoaded ? state as BoardLoaded : null;
 
   List<BoardColumnEntity> _mergedColumns() {
     final merged =
@@ -85,7 +92,9 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
   void _emitMerged(Emitter<BoardState> emit, {String? actionError}) {
     final loaded = _loaded;
     if (loaded != null) {
-      emit(loaded.copyWith(columns: _mergedColumns(), actionError: actionError));
+      emit(
+        loaded.copyWith(columns: _mergedColumns(), actionError: actionError),
+      );
     }
   }
 
@@ -108,7 +117,7 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
 
         // Failing to fetch members shouldn't block showing the board — the
         // assignee picker just falls back to an empty member list.
-        final membersResult = await boardRepo.getWorkspaceMembers(
+        final membersResult = await getWorkspaceMembersUseCase(
           workspaceId: board.workspaceId,
         );
         final members = membersResult.when(
@@ -141,12 +150,11 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
 
   Future<void> _subscribeToColumns(String boardId) async {
     await _columnsSubscription?.cancel();
-    _columnsSubscription = boardRepo.watchColumns(boardId: boardId).listen((
-      columns,
-    ) {
-      if (isClosed) return;
-      add(RealtimeColumnsUpdated(columns));
-    });
+    _columnsSubscription = watchColumnsUseCase(boardId: boardId)
+        .listen((columns) {
+          if (isClosed) return;
+          add(RealtimeColumnsUpdated(columns));
+        });
   }
 
   Future<void> _subscribeToTasks(List<String> columnIds) async {
@@ -155,10 +163,11 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
       _tasksByColumn = {};
       return;
     }
-    _tasksSubscription = boardRepo.watchTasks(columnIds: columnIds).listen((tasks) {
-      if (isClosed) return;
-      add(RealtimeTasksUpdated(tasks));
-    });
+    _tasksSubscription = watchTasksUseCase(columnIds: columnIds)
+        .listen((tasks) {
+          if (isClosed) return;
+          add(RealtimeTasksUpdated(tasks));
+        });
   }
 
   Future<void> _onRealtimeColumnsUpdated(
@@ -329,7 +338,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
 
   // ── Tasks ──
 
-  Future<void> _onTaskCreated(TaskCreated event, Emitter<BoardState> emit) async {
+  Future<void> _onTaskCreated(
+    TaskCreated event,
+    Emitter<BoardState> emit,
+  ) async {
     if (_loaded == null) return;
 
     final previous = Map<String, List<TaskEntity>>.from(_tasksByColumn);
@@ -407,7 +419,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     );
   }
 
-  Future<void> _onTaskUpdated(TaskUpdated event, Emitter<BoardState> emit) async {
+  Future<void> _onTaskUpdated(
+    TaskUpdated event,
+    Emitter<BoardState> emit,
+  ) async {
     if (_loaded == null) return;
 
     final previous = Map<String, List<TaskEntity>>.from(_tasksByColumn);
@@ -470,7 +485,9 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     final sameColumn = event.fromColumnId == event.targetColumnId;
     final destTasks = sameColumn
         ? sourceTasks
-        : List<TaskEntity>.from(_tasksByColumn[event.targetColumnId] ?? const []);
+        : List<TaskEntity>.from(
+            _tasksByColumn[event.targetColumnId] ?? const [],
+          );
 
     final insertIndex = event.newPosition.clamp(0, destTasks.length);
     destTasks.insert(
@@ -479,7 +496,8 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     );
 
     final reindexedDest = [
-      for (var i = 0; i < destTasks.length; i++) destTasks[i].copyWith(position: i),
+      for (var i = 0; i < destTasks.length; i++)
+        destTasks[i].copyWith(position: i),
     ];
     final reindexedSource = sameColumn
         ? reindexedDest
@@ -517,7 +535,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
         tasks: reindexedSource,
       );
     }
-    await reorderTasksUseCase(columnId: event.targetColumnId, tasks: reindexedDest);
+    await reorderTasksUseCase(
+      columnId: event.targetColumnId,
+      tasks: reindexedDest,
+    );
   }
 
   Future<void> _onTasksReordered(
@@ -548,7 +569,10 @@ class BoardBloc extends Bloc<BoardEvent, BoardState> {
     );
   }
 
-  Future<void> _onTaskDeleted(TaskDeleted event, Emitter<BoardState> emit) async {
+  Future<void> _onTaskDeleted(
+    TaskDeleted event,
+    Emitter<BoardState> emit,
+  ) async {
     if (_loaded == null) return;
 
     final previous = Map<String, List<TaskEntity>>.from(_tasksByColumn);

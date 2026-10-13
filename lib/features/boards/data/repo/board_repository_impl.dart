@@ -1,16 +1,23 @@
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/result.dart';
-import '../../../workspace/domain/entity/workspace_member_entity.dart';
 import '../../domain/entity/board_column_entity.dart';
 import '../../domain/entity/board_entity.dart';
 import '../../domain/entity/task_entity.dart';
 import '../../domain/repo/board_repo.dart';
 import '../datasources/board_remote_datasource.dart';
+import '../datasources/column_remote_datasource.dart';
+import '../datasources/task_remote_datasource.dart';
 
 class BoardRepositoryImpl implements BoardRepo {
-  final BoardRemoteDatasource datasource;
+  final BoardRemoteDatasource boardDatasource;
+  final ColumnRemoteDatasource columnDatasource;
+  final TaskRemoteDatasource taskDatasource;
 
-  BoardRepositoryImpl(this.datasource);
+  BoardRepositoryImpl({
+    required this.boardDatasource,
+    required this.columnDatasource,
+    required this.taskDatasource,
+  });
 
   @override
   Future<Result<BoardEntity>> createBoard({
@@ -18,7 +25,7 @@ class BoardRepositoryImpl implements BoardRepo {
     required String name,
   }) async {
     try {
-      final model = await datasource.createBoard(workspaceId: workspaceId, name: name);
+      final model = await boardDatasource.createBoard(workspaceId: workspaceId, name: name);
       return Result.success(model.toEntity());
     } on Exception catch (e) {
       return Result.error(mapExceptionToFailure(e));
@@ -31,7 +38,7 @@ class BoardRepositoryImpl implements BoardRepo {
     required String name,
   }) async {
     try {
-      final model = await datasource.updateBoard(id: id, name: name);
+      final model = await boardDatasource.updateBoard(id: id, name: name);
       return Result.success(model.toEntity());
     } on Exception catch (e) {
       return Result.error(mapExceptionToFailure(e));
@@ -41,7 +48,7 @@ class BoardRepositoryImpl implements BoardRepo {
   @override
   Future<Result<void>> deleteBoard({required String id}) async {
     try {
-      await datasource.deleteBoard(id: id);
+      await boardDatasource.deleteBoard(id: id);
       return Result.success(null);
     } on Exception catch (e) {
       return Result.error(mapExceptionToFailure(e));
@@ -53,7 +60,7 @@ class BoardRepositoryImpl implements BoardRepo {
   @override
   Future<Result<BoardEntity>> getBoard({required String boardId}) async {
     try {
-      final model = await datasource.getBoard(boardId: boardId);
+      final model = await boardDatasource.getBoard(boardId: boardId);
       return Result.success(model.toEntity());
     } on Exception catch (e) {
       return Result.error(mapExceptionToFailure(e));
@@ -69,7 +76,7 @@ class BoardRepositoryImpl implements BoardRepo {
     required int position,
   }) async {
     try {
-      final model = await datasource.createColumn(
+      final model = await columnDatasource.createColumn(
         boardId: boardId,
         name: name,
         position: position,
@@ -86,7 +93,7 @@ class BoardRepositoryImpl implements BoardRepo {
     required String name,
   }) async {
     try {
-      final model = await datasource.renameColumn(columnId: columnId, name: name);
+      final model = await columnDatasource.renameColumn(columnId: columnId, name: name);
       return Result.success(model.toEntity());
     } on Exception catch (e) {
       return Result.error(mapExceptionToFailure(e));
@@ -96,7 +103,7 @@ class BoardRepositoryImpl implements BoardRepo {
   @override
   Future<Result<void>> reorderColumns({required List<BoardColumnEntity> columns}) async {
     try {
-      await datasource.reorderColumns(
+      await columnDatasource.reorderColumns(
         columns: columns.map((c) => {'id': c.id, 'position': c.position}).toList(),
       );
       return Result.success(null);
@@ -108,7 +115,7 @@ class BoardRepositoryImpl implements BoardRepo {
   @override
   Future<Result<void>> deleteColumn({required String columnId}) async {
     try {
-      await datasource.deleteColumn(columnId: columnId);
+      await columnDatasource.deleteColumn(columnId: columnId);
       return Result.success(null);
     } on Exception catch (e) {
       return Result.error(mapExceptionToFailure(e));
@@ -128,7 +135,7 @@ class BoardRepositoryImpl implements BoardRepo {
     String? assigneeId,
   }) async {
     try {
-      final model = await datasource.createTask(
+      final model = await taskDatasource.createTask(
         columnId: columnId,
         title: title,
         description: description,
@@ -154,7 +161,7 @@ class BoardRepositoryImpl implements BoardRepo {
     bool clearAssignee = false,
   }) async {
     try {
-      final model = await datasource.updateTask(
+      final model = await taskDatasource.updateTask(
         taskId: taskId,
         title: title,
         description: description,
@@ -176,7 +183,7 @@ class BoardRepositoryImpl implements BoardRepo {
     required int newPosition,
   }) async {
     try {
-      await datasource.moveTask(
+      await taskDatasource.moveTask(
         taskId: taskId,
         targetColumnId: targetColumnId,
         newPosition: newPosition,
@@ -193,7 +200,7 @@ class BoardRepositoryImpl implements BoardRepo {
     required List<TaskEntity> tasks,
   }) async {
     try {
-      await datasource.reorderTasks(
+      await taskDatasource.reorderTasks(
         tasks: tasks.map((t) => {'id': t.id, 'position': t.position}).toList(),
       );
       return Result.success(null);
@@ -205,7 +212,7 @@ class BoardRepositoryImpl implements BoardRepo {
   @override
   Future<Result<void>> deleteTask({required String taskId}) async {
     try {
-      await datasource.deleteTask(taskId: taskId);
+      await taskDatasource.deleteTask(taskId: taskId);
       return Result.success(null);
     } on Exception catch (e) {
       return Result.error(mapExceptionToFailure(e));
@@ -216,29 +223,15 @@ class BoardRepositoryImpl implements BoardRepo {
 
   @override
   Stream<List<BoardColumnEntity>> watchColumns({required String boardId}) {
-    return datasource
+    return columnDatasource
         .watchColumns(boardId: boardId)
         .map((models) => models.map((m) => m.toEntity()).toList());
   }
 
   @override
   Stream<List<TaskEntity>> watchTasks({required List<String> columnIds}) {
-    return datasource
+    return taskDatasource
         .watchTasks(columnIds: columnIds)
         .map((models) => models.map((m) => m.toEntity()).toList());
-  }
-
-  // ── Workspace Members (for task assignment) ──
-
-  @override
-  Future<Result<List<WorkspaceMemberEntity>>> getWorkspaceMembers({
-    required String workspaceId,
-  }) async {
-    try {
-      final models = await datasource.getWorkspaceMembers(workspaceId: workspaceId);
-      return Result.success(models.map((m) => m.toEntity()).toList());
-    } on Exception catch (e) {
-      return Result.error(mapExceptionToFailure(e));
-    }
   }
 }

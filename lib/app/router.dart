@@ -37,8 +37,10 @@ class AppRouter {
       GoRoute(
         path: RouteNames.login,
         name: RouteNames.login,
-        builder: (context, state) =>
-            BlocProvider(create: (_) => sl<AuthCubit>(), child: const LoginScreen()),
+        builder: (context, state) => BlocProvider(
+          create: (_) => sl<AuthCubit>(),
+          child: const LoginScreen(),
+        ),
       ),
       GoRoute(
         path: RouteNames.home,
@@ -50,8 +52,9 @@ class AppRouter {
             ),
             BlocProvider<BoardCubit>(create: (_) => sl<BoardCubit>()),
             BlocProvider<NotificationCubit>(
-              create: (_) => sl<NotificationCubit>()
-                ..startListening(sl<SessionCubit>().state.user!.id),
+              create: (_) =>
+                  sl<NotificationCubit>()
+                    ..startListening(sl<SessionCubit>().state.user!.id),
             ),
             BlocProvider<SearchCubit>(create: (_) => sl<SearchCubit>()),
           ],
