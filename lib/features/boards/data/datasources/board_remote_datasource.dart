@@ -1,4 +1,3 @@
-import '../../../workspace/data/models/workspace_member_model.dart';
 import '../models/board_model.dart';
 
 abstract class BoardRemoteDatasource {
@@ -10,7 +9,4 @@ abstract class BoardRemoteDatasource {
 
   // ── Board Fetching ──
   Future<BoardModel> getBoard({required String boardId});
-
-  // ── Workspace Members (for task assignment) ──
-  Future<List<WorkspaceMemberModel>> getWorkspaceMembers({required String workspaceId});
 }

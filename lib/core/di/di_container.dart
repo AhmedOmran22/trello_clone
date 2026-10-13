@@ -78,6 +78,7 @@ void _initWorkspace() {
   sl.registerLazySingleton(() => DeleteWorkspaceUseCase(sl()));
   sl.registerLazySingleton(() => AddMemberUseCase(sl()));
   sl.registerLazySingleton(() => RemoveMemberUseCase(sl()));
+  sl.registerLazySingleton(() => GetWorkspaceMembersUseCase(sl()));
 
   // Cubit
   sl.registerFactory(
@@ -127,6 +128,8 @@ void _initBoard() {
   sl.registerLazySingleton(() => MoveTaskUseCase(sl()));
   sl.registerLazySingleton(() => ReorderTasksUseCase(sl()));
   sl.registerLazySingleton(() => DeleteTaskUseCase(sl()));
+  sl.registerLazySingleton(() => WatchColumnsUseCase(sl()));
+  sl.registerLazySingleton(() => WatchTasksUseCase(sl()));
 
   // Cubit
   sl.registerFactory(
@@ -141,7 +144,6 @@ void _initBoard() {
   sl.registerFactoryParam<BoardBloc, String, void>(
     (boardId, _) => BoardBloc(
       boardId: boardId,
-      boardRepo: sl(),
       getBoardUseCase: sl(),
       createColumnUseCase: sl(),
       renameColumnUseCase: sl(),
@@ -152,6 +154,9 @@ void _initBoard() {
       moveTaskUseCase: sl(),
       reorderTasksUseCase: sl(),
       deleteTaskUseCase: sl(),
+      getWorkspaceMembersUseCase: sl(),
+      watchColumnsUseCase: sl(),
+      watchTasksUseCase: sl(),
     ),
   );
 }

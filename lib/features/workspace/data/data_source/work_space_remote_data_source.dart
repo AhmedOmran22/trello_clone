@@ -13,6 +13,8 @@ abstract class WorkspaceRemoteDatasource {
 
   Future<void> deleteWorkspace({required String id});
 
+  Future<List<WorkspaceMemberModel>> getMembers({required String workspaceId});
+
   Future<WorkspaceMemberModel> addMember({
     required String workspaceId,
     required String email,

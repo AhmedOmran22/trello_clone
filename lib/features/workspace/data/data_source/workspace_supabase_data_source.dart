@@ -88,6 +88,22 @@ class WorkspaceSupabaseDatasource implements WorkspaceRemoteDatasource {
   }
 
   @override
+  Future<List<WorkspaceMemberModel>> getMembers({
+    required String workspaceId,
+  }) async {
+    try {
+      final response = await services.client
+          .from(SupabaseTables.workspaceMembers)
+          .select('id, user_id, role, profiles(full_name, email, avatar_url)')
+          .eq('workspace_id', workspaceId);
+
+      return response.map((json) => WorkspaceMemberModel.fromJson(json)).toList();
+    } on Exception catch (e) {
+      throw mapToAppException(e);
+    }
+  }
+
+  @override
   Future<WorkspaceMemberModel> addMember({
     required String workspaceId,
     required String email,

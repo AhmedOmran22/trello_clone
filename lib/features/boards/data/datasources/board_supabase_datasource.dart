@@ -1,7 +1,6 @@
 import '../../../../core/constants/supabase_tables.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/subabase_services.dart';
-import '../../../workspace/data/models/workspace_member_model.dart';
 import '../models/board_model.dart';
 import 'board_remote_datasource.dart';
 
@@ -63,24 +62,6 @@ class BoardSupabaseDatasource implements BoardRemoteDatasource {
           .single();
 
       return BoardModel.fromJson(response);
-    } on Exception catch (e) {
-      throw mapToAppException(e);
-    }
-  }
-
-  // ── Workspace Members (for task assignment) ──
-
-  @override
-  Future<List<WorkspaceMemberModel>> getWorkspaceMembers({
-    required String workspaceId,
-  }) async {
-    try {
-      final response = await services.client
-          .from(SupabaseTables.workspaceMembers)
-          .select('id, user_id, role, profiles(full_name, email, avatar_url)')
-          .eq('workspace_id', workspaceId);
-
-      return response.map((json) => WorkspaceMemberModel.fromJson(json)).toList();
     } on Exception catch (e) {
       throw mapToAppException(e);
     }
